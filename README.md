@@ -21,7 +21,7 @@ The compromise I found in order to compete with secure communication giants is:
 
 # Protocol
 
-See [PROTOCOL.md] for the protocol details.
+See [PROTOCOL.md](./PROTOCOL.md) for the protocol details.
 
 
 
