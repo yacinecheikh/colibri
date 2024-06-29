@@ -1,4 +1,9 @@
 from subprocess import PIPE, Popen
+from uuid import uuid4 as uuid
+import os
+
+import db
+
 
 def syscall(cmd, stdin=None):
     "statuscode, stdout, stderr = system(command[, stdin])"
@@ -17,7 +22,12 @@ def syscall(cmd, stdin=None):
 
 def create_key():
     # return name
-    pass
+    while True:
+        name = str(uuid())
+        if not os.path.exists(f"data/keys/{name}.public.asc"):
+            break
+    syscall(f"./sgpg/create-key data/keys/{name}")
+    return name
 
 # TODO
 def encrypt(key_name):

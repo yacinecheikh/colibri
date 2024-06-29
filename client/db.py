@@ -18,9 +18,10 @@ db operations
 """
 
 def list_servers():
-    return query("""
+    servers = query("""
     select url from server
     """)
+    return [server[0] for server in servers]
 
 def list_invites():
     return query("""
@@ -35,22 +36,23 @@ def list_stores():
     on store.server = server.id
     """)
 
+# TODO: test and clean
 def list_addresses():
     return query("""
-    select message_address.address, server.url
-    from message_address
+    select address.*, server.url
+    from address
     join server
-    on message_address.server = server.id
+    on address.server = server.id
     """)
 
 
 
 
-def add_server(address):
+def add_server(url):
     query("""
     insert into server (url)
     values (?)
-    """, [address])
+    """, [url])
 
 def add_store(address, server, auth, aes_key):
     return query("""
@@ -61,8 +63,16 @@ def add_store(address, server, auth, aes_key):
         ?, ?)
     """, [address, server, auth, aes_key])
 
-def add_address(address, server, key_name):
-    pass
+def add_address(name, server, auth, key_name):
+    if server not in list_servers():
+        add_server(server)
+    return query("""
+    insert into address (name, server, auth, key_name)
+    values (?,
+        (select id from server
+        where url = ?),
+        ?, ?)
+    """, [name, server, auth, key_name])
 
 #def add_invite(a
 

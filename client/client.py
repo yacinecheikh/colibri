@@ -4,7 +4,7 @@ from random import choice
 import argparse
 
 import net
-from system import syscall
+import system
 import db
 
 
@@ -13,18 +13,63 @@ parser = argparse.ArgumentParser(
         prog="client.py",
         description="Colibri CLI client")
 
-parser.add_argument("command", choices=["list-servers", "list-invites", "list-addresses", "list-rooms"])
-subparsers = parser.add_subparsers()
+#parser.add_argument("command", choices=["list-servers", "list-invites", "list-addresses", "list-rooms"])
+subparsers = parser.add_subparsers(dest="command")
 #send_invite_parser = subparsers.add_parser("send-invite")
+# subparsers
+sub = subparsers.add_parser("add-server")
+sub.add_argument("host")
+
+sub = subparsers.add_parser("list-servers")
+
+sub = subparsers.add_parser("new-address")
+sub.add_argument("server", nargs="?", default=None)  # optional
+
+sub = subparsers.add_parser("list-addresses")
+
 
 args = parser.parse_args()
 
 
+print(args)
+
 match args.command:
+    # print
     case "list-servers":
-        print("listing servers...")
-        print(db.list_servers())
-    case default:
+        print("\n".join(db.list_servers()))
+    case "list-invites":
+        pass
+    case "list-addresses":
+        print(db.list_addresses())
+    case "list-rooms":
+        pass
+
+    # config
+    case "add-server":
+        db.add_server(args.host)
+
+    # server interaction
+    case "new-address":
+        key_name = system.create_key()
+        address_auth = str(uuid())
+        server = args.server
+        if server is None:
+            server = choice(db.list_servers())
+        print(f"generating address on server {server}")
+        address_id = net.register_store(server, address_auth)
+        db.add_address(address_id, server, address_auth, key_name)
+    case "new-store":
+        pass
+
+    # fetch updates
+    case "pull":
+        pass
+    # message interactions
+    case "read-room":
+        pass
+    case "write-room":
+        pass
+    case "accept-invite":
         pass
 
 

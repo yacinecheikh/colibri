@@ -55,7 +55,7 @@ create table if not exists address (
 	--label text,
 	--enabled bool default true,
 
-	key_folder text,
+	key_name text,
 	
 	foreign key (server) references server (id)
 );
