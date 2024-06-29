@@ -13,7 +13,7 @@ The problem with this solution is that:
 - it requires root access
 - other tools exist to reproduce this level of security
 
-files: init.sh, start.sh
+files: init.sh, start.sh, requirements
 
 ## FUSE proxy for GPG keys stored in a database
 
@@ -23,4 +23,4 @@ Unfortunately, this is bloated and people who can use encryption already do it.
 
 The system itself having a malware (root or not) is currently not protected agaist. If you want this level of security, use a system that is isolated in the first place (Tails, QubesOS, Whonix,...), encrypt it and keep the data disconnected when not using it.
 
-files: fs.py, init\_db.sql
+files: fs.py, init\_db.sql, requirements.txt

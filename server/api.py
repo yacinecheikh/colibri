@@ -30,7 +30,7 @@ class Write(Auth, Data):
     /{addr}: get (auth) -> [(id, data)]
     /{addr}: post (data) -> ok
     /{addr}: delete (auth, [id]) -> [ok]
-        sert à vider le cache
+        used to clear leftover data
 /store:
     /create: post (auth) -> addr
     /{addr}: get (auth) -> data
