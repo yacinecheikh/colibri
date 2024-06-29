@@ -2,7 +2,7 @@ import sqlite3
 #import os
 from uuid import uuid4 as uuid
 
-db = sqlite3.connect('db.db', check_same_thread=False)
+db = sqlite3.connect('storage.db', check_same_thread=False)
 
 #"""
 #sql additions
@@ -25,20 +25,19 @@ create tables
 """
 
 db.executescript("""
--- 1 message_queue - many message
 create table if not exists message (
     id text primary key,
     address text,
     data text
 ) without rowid;
 
-create table if not exists message_queue (
-    address text primary key,
+create table if not exists address (
+    uuid text primary key,
     auth text
 ) without rowid;
 
 create table if not exists store (
-    address text primary key,
+    uuid text primary key,
     auth text,
     data text
 ) without rowid
@@ -47,17 +46,18 @@ create table if not exists store (
 db.commit()
 
 def add_address(auth):
-    # create a free address
+    # create a free address id
     while True:
+        # address uuid
         address = str(uuid())
         result = db.execute("""
-        select address from message_queue
-        where address = ?
+        select uuid from address
+        where uuid = ?
         """, [address]).fetchone()
         if result is None:
             break
     db.execute("""
-    insert into message_queue (address, auth)
+    insert into address (uuid, auth)
     values (?, ?)
     """, [address, auth])
     db.commit()
@@ -72,10 +72,10 @@ def get_messages(address, auth):
     result = db.execute("""
     select message.id, message.data
     from message
-    join message_queue
-    on message.address = message_queue.address
-    where message_queue.address = ?
-    and message_queue.auth = ?
+    join address
+    on message.address = address.uuid
+    where address.uuid = ?
+    and address.auth = ?
     """, (address, auth))
     return result.fetchall()
     messages = []
@@ -87,7 +87,7 @@ def get_messages(address, auth):
     return messages
 
 def add_message(address, data):
-    # create a free address
+    # create a free message id
     while True:
         identifier = str(uuid())
         res = db.execute("""
@@ -106,16 +106,16 @@ def add_message(address, data):
 # TODO: return True if succeeded
 def remove_message(address, message_id, auth):
     # delete with join deletes everything joined
-    # (cannot join with the message_queue)
+    # (cannot join with the address)
     db.execute("""
     delete from message
     where id not in (
         select id
         from message
-        join message_queue
-        on message.address = message_queue.address
-        where message_queue.address = ?
-          and message_queue.auth = ?
+        join address
+        on message.address = address.uuid
+        where address.uuid = ?
+          and address.auth = ?
     )
     """, (address, auth))
     db.commit()
@@ -125,41 +125,41 @@ def remove_message(address, message_id, auth):
 
 
 def add_store(auth):
-    # create a free address
+    # create a free store id
     while True:
-        address = str(uuid())
+        store_id = str(uuid())
         result = db.execute("""
-        select address from store
-        where address = ?
-        """, [address]).fetchone()
+        select uuid from store
+        where uuid = ?
+        """, [store_id]).fetchone()
         if result is None:
             break
     db.execute("""
-    insert into store (address, auth, data)
+    insert into store (uuid, auth, data)
     values (?, ?, '')
-    """, [address, auth])
+    """, [store_id, auth])
     db.commit()
-    return address
+    return store_id
 
 
-def get_store(address, auth):
+def get_store(store_id, auth):
     res = db.execute("""
     select data from store
-    where address = ?
+    where uuid = ?
       and auth = ?
-    """, (address, auth)).fetchone()
+    """, (store_id, auth)).fetchone()
     # None -> fail
     if res:
         return res[0]
 
-def set_store(address, auth, data):
+def set_store(store_id, auth, data):
     # TODO: return True if success
     # TODO: add hashing to prevent collisions and allow clients to synchronize
     db.execute("""
     update store
     set data = ?
-    where address = ?
+    where uuid = ?
       and auth = ?
-    """, (data, address, auth))
+    """, (data, store_id, auth))
     db.commit()
 

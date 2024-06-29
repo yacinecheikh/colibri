@@ -32,26 +32,26 @@ def post(endpoint, data={}):
 
 
 """
-message
+address
 """
 
-message_auth = str(uuid())
+address_auth = str(uuid())
 
-post('message/register')
-message_address = post('/message/register', {
-    'auth': message_auth,
+post('address/register')
+address = post('/address/register', {
+    'auth': address_auth,
 })
 
-get(f'message/{message_address}', {
-    'auth': message_auth,
+get(f'address/{address}', {
+    'auth': address_auth,
 })
 
-post(f'message/{message_address}', {
+post(f'address/{address}', {
     'data': 'hi',
 })
 
-messages = get(f'message/{message_address}', {
-    'auth': message_auth,
+messages = get(f'address/{address}', {
+    'auth': address_auth,
 })
 
 ids = [message['id'] for message in messages]

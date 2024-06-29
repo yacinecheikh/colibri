@@ -25,26 +25,24 @@ class Write(Auth, Data):
 
 
 """
-/message:
+/address:
     /register: post (auth) -> addr
     /{addr}: get (auth) -> [(id, data)]
     /{addr}: post (data) -> ok
     /{addr}: delete (auth, [id]) -> [ok]
-        used to clear leftover data
 /store:
-    /create: post (auth) -> addr
+    /register: post (auth) -> addr
     /{addr}: get (auth) -> data
     /{addr}: post (auth, data, hash) -> ok
-
 """
 
-@app.post('/message/register')
-def message_register(req: Auth):
+@app.post('/address/register')
+def address_register(req: Auth):
     return db.add_address(req.auth)
 
-@app.get('/message/{address}')
-def read_mails(address: str, req: Auth):
-    messages = db.get_messages(address, req.auth)
+@app.get('/address/{uuid}')
+def read_address(uuid: str, req: Auth):
+    messages = db.get_messages(uuid, req.auth)
     result = []
     for (mid, mdata) in messages:
         result.append({
@@ -53,16 +51,16 @@ def read_mails(address: str, req: Auth):
         })
     return result
 
-@app.post('/message/{address}')
-def send_message(address: str, req: Data):
-    db.add_message(address, req.data)
+@app.post('/address/{uuid}')
+def send_message(uuid: str, req: Data):
+    db.add_message(uuid, req.data)
     # TODO: return ok unless internal error
-    return []
+    return "ok"
 
-@app.delete('/message/{address}')
-def remove_messages(address: str, req: MessageDelete):
+@app.delete('/address/{uuid}')
+def remove_messages(uuid: str, req: MessageDelete):
     for message in req.ids:
-        db.remove_message(address, message, req.auth)
+        db.remove_message(uuid, message, req.auth)
     # TODO: status ?
     return 'ok'
 
@@ -71,12 +69,12 @@ def remove_messages(address: str, req: MessageDelete):
 def store_register(req: Auth):
     return db.add_store(req.auth)
 
-@app.get('/store/{address}')
-def get_store(address: str, req: Auth):
-    return db.get_store(address, req.auth)
+@app.get('/store/{uuid}')
+def get_store(uuid: str, req: Auth):
+    return db.get_store(uuid, req.auth)
 
-@app.post('/store/{address}')
-def set_store(address: str, req: Write):
-    return db.set_store(address, req.auth, req.data)
+@app.post('/store/{uuid}')
+def set_store(uuid: str, req: Write):
+    return db.set_store(uuid, req.auth, req.data)
 
 
