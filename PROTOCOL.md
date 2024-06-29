@@ -62,14 +62,14 @@ Doing so allows me to streamline the API and only use JSON instead of encoding a
 
 Message API:
 ```
-POST /message/register
+POST /address/register
 {
     "auth": "<my auth token>"
 }
 Returns:
 "<address>"
 
-GET /message/{address}
+GET /address/{address}
 {
     "auth": "<my auth token>"
 }
@@ -82,14 +82,14 @@ Returns:
     …
 ]
 
-POST /message/{address}
+POST /address/{address}
 {
     "data": "<encrypted data>"
 }
 Returns:
 "ok"
 
-DELETE /message/{address}
+DELETE /address/{address}
 {
     "auth": "<my auth token>",
     "remove": [
@@ -113,14 +113,14 @@ POST /store/register
 Returns:
 "<address>"
 
-GET /store/{address}
+GET /store/{store}
 {
     "auth": "<my store auth token>"
 }
 Returns:
 "<data>"
 
-POST /store/{address}
+POST /store/{store}
 {
     "auth": "<my store auth token>",
     "data": "<data>"
