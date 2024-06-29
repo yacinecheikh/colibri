@@ -1,22 +1,33 @@
 import requests
 from uuid import uuid4 as uuid
 from random import choice
-import subprocess
+import argparse
+
+import net
+from system import syscall
+import db
 
 
-def syscall(cmd, stdin=None):
-    "statuscode, stdout, stderr = system(command[, stdin])"
-    if stdin is not None:
-        stdin = stdin.encode()
-    p = subprocess.Popen(
-            cmd,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
-    out, err = p.communicate(stdin)
-    out = out.decode()
-    err = err.decode()
-    return p.returncode, out, err
+# alternative to arg parsing: use an stdin script ? (while true: input())
+parser = argparse.ArgumentParser(
+        prog="client.py",
+        description="Colibri CLI client")
+
+parser.add_argument("command", choices=["list-servers", "list-invites", "list-addresses", "list-rooms"])
+subparsers = parser.add_subparsers()
+#send_invite_parser = subparsers.add_parser("send-invite")
+
+args = parser.parse_args()
+
+
+match args.command:
+    case "list-servers":
+        print("listing servers...")
+        print(db.list_servers())
+    case default:
+        pass
+
+
 
 
 keys = {}
@@ -27,14 +38,6 @@ def create_key():
     name = str(uuid())
     syscall('./sgpg/create-key keys/{name}')
 
-
-servers = [
-    "http://localhost:8000"
-]
-
-#headers = {
-#        'Content-Type': 'application/json',
-#}
 
 def get(endpoint, data):
     response = requests.get(endpoint, json=data)
@@ -117,26 +120,26 @@ def send_invite_message(address, server):
 message
 """
 
-message_auth = str(uuid())
-
-post('message/register')
-message_address = post('/message/register', {
-    'auth': message_auth,
-})
-
-get(f'message/{message_address}', {
-    'auth': message_auth,
-})
-
-post(f'message/{message_address}', {
-    'data': 'hi',
-})
-
-messages = get(f'message/{message_address}', {
-    'auth': message_auth,
-})
-
-ids = [message['id'] for message in messages]
+#message_auth = str(uuid())
+#
+#post('message/register')
+#message_address = post('/message/register', {
+#    'auth': message_auth,
+#})
+#
+#get(f'message/{message_address}', {
+#    'auth': message_auth,
+#})
+#
+#post(f'message/{message_address}', {
+#    'data': 'hi',
+#})
+#
+#messages = get(f'message/{message_address}', {
+#    'auth': message_auth,
+#})
+#
+#ids = [message['id'] for message in messages]
 
 
 
@@ -144,26 +147,26 @@ ids = [message['id'] for message in messages]
 store
 """
 
-store_auth = str(uuid())
-
-post('store/register')
-
-store_address = post('store/register', {
-    'auth': store_auth,
-})
-
-get(f'store/{store_address}')
-get(f'store/{store_address}', {
-    'auth': store_auth,
-})
-
-post(f'store/{store_address}')
-post(f'store/{store_address}', {
-    'auth': store_auth,
-    'data': 'storage',
-})
-
-get(f'store/{store_address}', {
-    'auth': store_auth,
-})
+#store_auth = str(uuid())
+#
+#post('store/register')
+#
+#store_address = post('store/register', {
+#    'auth': store_auth,
+#})
+#
+#get(f'store/{store_address}')
+#get(f'store/{store_address}', {
+#    'auth': store_auth,
+#})
+#
+#post(f'store/{store_address}')
+#post(f'store/{store_address}', {
+#    'auth': store_auth,
+#    'data': 'storage',
+#})
+#
+#get(f'store/{store_address}', {
+#    'auth': store_auth,
+#})
 
