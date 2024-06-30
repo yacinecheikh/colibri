@@ -2,6 +2,7 @@ import requests
 from uuid import uuid4 as uuid
 from random import choice
 import argparse
+import os
 
 import net
 import system
@@ -27,6 +28,12 @@ sub.add_argument("server", nargs="?", default=None)  # optional
 
 sub = subparsers.add_parser("list-addresses")
 
+sub = subparsers.add_parser("new-room")
+sub.add_argument("server", nargs="?", default=None)  # optional
+
+sub = subparsers.add_parser("list-rooms")
+
+
 
 args = parser.parse_args()
 
@@ -40,9 +47,11 @@ match args.command:
     case "list-invites":
         pass
     case "list-addresses":
-        print(db.list_addresses())
+        for (name, server) in db.list_addresses():
+            print(f"{name}@{server}")
     case "list-rooms":
-        pass
+        for (name, server) in db.list_stores():
+            print(f"{name}@{server}")
 
     # config
     case "add-server":
@@ -56,10 +65,18 @@ match args.command:
         if server is None:
             server = choice(db.list_servers())
         print(f"generating address on server {server}")
-        address_id = net.register_store(server, address_auth)
+        address_id = net.register_address(server, address_auth)
         db.add_address(address_id, server, address_auth, key_name)
-    case "new-store":
-        pass
+    case "new-room":
+        # AES128 -> 16 random bytes
+        aes_key = os.urandom(16)
+        room_auth = str(uuid())
+        server = args.server
+        if server is None:
+            server = choice(db.list_servers())
+        print(f"generating room on server {server}")
+        room_id = net.register_room(server, room_auth)
+        db.add_store(room_id, server, room_auth, aes_key)
 
     # fetch updates
     case "pull":

@@ -30,7 +30,7 @@ def list_invites():
     
 def list_stores():
     return query("""
-    select store.address, server.url
+    select store.name, server.url
     from store
     join server
     on store.server = server.id
@@ -39,7 +39,7 @@ def list_stores():
 # TODO: test and clean
 def list_addresses():
     return query("""
-    select address.*, server.url
+    select address.name, server.url
     from address
     join server
     on address.server = server.id
@@ -54,14 +54,14 @@ def add_server(url):
     values (?)
     """, [url])
 
-def add_store(address, server, auth, aes_key):
+def add_store(name, server, auth, aes_key):
     return query("""
-    insert into store (address, server, auth, aes_key)
+    insert into store (name, server, auth, aes_key)
     values (?,
         (select id from server
         where url = ?),
         ?, ?)
-    """, [address, server, auth, aes_key])
+    """, [name, server, auth, aes_key])
 
 def add_address(name, server, auth, key_name):
     if server not in list_servers():

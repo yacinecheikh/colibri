@@ -4,14 +4,17 @@ def post(endpoint, data):
     return requests.post(endpoint, json=data).json()
 
 
-def register_store(server, auth):
+def register_room(server, auth):
+    store = post(f'{server}/store/register', {
+        'auth': auth,
+    })
+    return store
+
+def register_address(server, auth):
     address = post(f'{server}/address/register', {
         'auth': auth,
     })
     return address
-
-def register_message_address(server):
-    pass
 
 def read_store(address, server, auth):
     pass
