@@ -28,9 +28,17 @@ create table if not exists store (
 	-- vanity
 	--label text,
 	--enabled bool default true,
+
+
+	--lastupdate default current_timestamp
+	--last_data blob,
+	data_dir text,
 	
 	foreign key (server) references server (id)
 );
+
+
+
 
 --create trigger if not exists store_label
 --after insert on store

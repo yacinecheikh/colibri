@@ -75,8 +75,15 @@ match args.command:
         if server is None:
             server = choice(db.list_servers())
         print(f"generating room on server {server}")
-        room_id = net.register_room(server, room_auth)
-        db.add_store(room_id, server, room_auth, aes_key)
+        room_id = net.register_store(server, room_auth)
+        room_folder = system.create_store()
+        db.add_store(room_id, server, room_auth, aes_key, room_folder)
+
+    # fetch updates for one address
+    case "read-address":
+        pass
+    case "send-invite":
+        pass
 
     # fetch updates
     case "pull":
@@ -94,13 +101,6 @@ match args.command:
 
 keys = {}
 
-
-def create_key():
-    # TODO: assert does not exist on a fs
-    name = str(uuid())
-    syscall('./sgpg/create-key keys/{name}')
-
-
 def get(endpoint, data):
     response = requests.get(endpoint, json=data)
     return response.json()
@@ -113,16 +113,6 @@ def post(endpoint, data):
 message_addresses = {}
 
 stores = {}
-
-
-
-
-def generate_keys():
-    keyname = str(uuid())
-    pass
-
-
-
 
 def generate_message_address():
     auth = str(uuid())

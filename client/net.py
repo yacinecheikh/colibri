@@ -4,7 +4,7 @@ def post(endpoint, data):
     return requests.post(endpoint, json=data).json()
 
 
-def register_room(server, auth):
+def register_store(server, auth):
     store = post(f'{server}/store/register', {
         'auth': auth,
     })
@@ -16,14 +16,22 @@ def register_address(server, auth):
     })
     return address
 
-def read_store(address, server, auth):
-    pass
+# TODO: test
+def read_store(store, server, auth):
+    return get(f"{server}/store/{store}", {
+        "auth": auth,
+    })
 
-def write_store(address, server, auth):
-    pass
+def write_store(address, server, auth, data):
+    return post(f"{server}/address/{address}", {
+        "auth": auth,
+        "data": data,
+    })
 
 def read_messages(address, server, auth):
-    pass
+    return get(f"{server}/address/{address}", {
+        "auth": auth,
+    })
 
 
 def delete_message_cache(address, server, auth):

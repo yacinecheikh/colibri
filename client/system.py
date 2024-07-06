@@ -1,3 +1,7 @@
+"""
+Subprocess and file interaction
+"""
+
 from subprocess import PIPE, Popen
 from uuid import uuid4 as uuid
 import os
@@ -30,5 +34,33 @@ def create_key():
     return name
 
 # TODO
-def encrypt(key_name):
+def encrypt(key_name, message):
     pass
+
+def decrypt(key_name, message):
+    pass
+
+# these features are not used currently
+#def sign(key_name, message):
+#    pass
+
+#def verify(key_name, message):
+#    pass
+
+
+def sym_encrypt(aes_key, message):
+    pass
+
+def sym_decrypt(aes_key, message):
+    pass
+
+
+"""
+"""
+
+def create_store():
+    while True:
+        name = str(uuid())
+        if not os.path.exists(f"data/rooms/{name}"):
+            os.mkdir(f"data/rooms/{name}")
+            return name

@@ -36,7 +36,6 @@ def list_stores():
     on store.server = server.id
     """)
 
-# TODO: test and clean
 def list_addresses():
     return query("""
     select address.name, server.url
@@ -54,14 +53,14 @@ def add_server(url):
     values (?)
     """, [url])
 
-def add_store(name, server, auth, aes_key):
+def add_store(name, server, auth, aes_key, data_dir):
     return query("""
-    insert into store (name, server, auth, aes_key)
+    insert into store (name, server, auth, aes_key, data_dir)
     values (?,
         (select id from server
         where url = ?),
-        ?, ?)
-    """, [name, server, auth, aes_key])
+        ?, ?, ?)
+    """, [name, server, auth, aes_key, data_dir])
 
 def add_address(name, server, auth, key_name):
     if server not in list_servers():
@@ -82,7 +81,7 @@ def add_address(name, server, auth, key_name):
 
 def get_store(address, server):
     return query("""
-    select store.*
+    select store.*, server.url
     from store
     join server
     on store.server = server.id
@@ -96,6 +95,7 @@ def get_message_address(address, server):
     select query.*
     """)
     pass
+
 def remove_invite(invite_id):
     return query("""
     delete from invite
