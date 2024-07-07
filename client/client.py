@@ -33,12 +33,26 @@ sub.add_argument("server", nargs="?", default=None)  # optional
 
 sub = subparsers.add_parser("list-rooms")
 
+sub = subparsers.add_parser("read-addresses")
+
+sub = subparsers.add_parser("read-address")
+sub.add_argument("address")
+
+sub = subparsers.add_parser("clean-address")
+sub.add_argument("address")
+
+sub = subparsers.add_parser("read-room")
+sub.add_argument("room")
+
+sub = subparsers.add_parser("write-room")
+sub.add_argument("room")
+
 
 
 args = parser.parse_args()
 
 
-print(args)
+#print(args)
 
 match args.command:
     # print
@@ -80,8 +94,25 @@ match args.command:
         db.add_store(room_id, server, room_auth, aes_key, room_folder)
 
     # fetch updates for one address
+    case "read-addresses":
+        for (name, server) in db.list_addresses():
+            # TODO: remove the [1] (["auth"] instead)
+            auth = db.get_address(name, server)[1]
+            # TODO: decrypt invites (encrypted json)
+            messages = net.read_messages(name, server, auth)
+            print(f"{name}@{server}:")
+            print(messages)
+
     case "read-address":
-        pass
+        address = args.address
+        name, server = address.split("@")
+        # TODO: make this readable
+        # TODO: (convert db output to json)
+        auth = db.get_address(name, server)[1]
+        messages = net.read_messages(name, server, auth)
+        # TODO: decrypt invites (encrypted json)
+        print(messages)
+
     case "send-invite":
         pass
 

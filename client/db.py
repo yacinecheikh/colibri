@@ -79,6 +79,20 @@ def add_address(name, server, auth, key_name):
 
 
 
+
+
+
+def get_address(name, server):
+    return query("""
+    select address.name, address.auth, address.key_name, server.url
+    from address
+    join server
+    on server.id = address.server
+
+    where address.name = ? and server.url = ?
+    """, [name, server])[0]
+
+
 def get_store(address, server):
     return query("""
     select store.*, server.url

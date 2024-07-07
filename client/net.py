@@ -2,6 +2,8 @@ import requests
 
 def post(endpoint, data):
     return requests.post(endpoint, json=data).json()
+def get(endpoint, data):
+    return requests.get(endpoint, json=data).json()
 
 
 def register_store(server, auth):
