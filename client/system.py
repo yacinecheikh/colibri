@@ -17,12 +17,20 @@ def syscall(cmd, stdin=None):
             cmd,
             shell=True,
             stdout=PIPE,
-            stderr=PIPE)
+            stderr=PIPE,
+            stdin=PIPE if stdin is not None else None)
+    #if stdin is not None:
+    #    p.stdin.write(stdin)
     out, err = p.communicate(stdin)
+    #out, err = p.communicate()
     out = out.decode()
     err = err.decode()
     return p.returncode, out, err
 
+
+"""
+gpg calls
+"""
 
 def create_key():
     # return name
@@ -35,32 +43,30 @@ def create_key():
 
 # TODO
 def encrypt(key_name, message):
-    pass
+    return syscall(f"./sgpg/encrypt data/keys/{key_name}.public.asc", message)[1]
 
 def decrypt(key_name, message):
-    pass
+    return syscall(f"./sgpg/decrypt data/keys/{key_name}.private.asc", message)[1]
 
-# these features are not used currently
-#def sign(key_name, message):
-#    pass
+# TODO: these commands are not secure
+# any process running "ps aux" can get the passwords of currently running gpg processes
+# additionally, script injections allow the server to generate malicious keys to inject code in bash
+def sym_encrypt(sym_key, message):
+    return syscall(f"gpg --batch --passphrase {sym_key} -c", message)
 
-#def verify(key_name, message):
-#    pass
-
-
-def sym_encrypt(aes_key, message):
-    pass
-
-def sym_decrypt(aes_key, message):
-    pass
+def sym_decrypt(sym_key, message):
+    return syscall(f"gpg --batch --passphrase {sym_key} -d", message)
 
 
 """
+fs
 """
 
-def create_store():
+def create_room():
     while True:
         name = str(uuid())
         if not os.path.exists(f"data/rooms/{name}"):
-            os.mkdir(f"data/rooms/{name}")
+            syscall(f'touch data/rooms/{name}')
             return name
+
+
