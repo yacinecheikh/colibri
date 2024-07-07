@@ -17,23 +17,20 @@ def query(*args):
 db operations
 """
 
+# read
+
 def list_servers():
     servers = query("""
     select url from server
     """)
     return [server[0] for server in servers]
 
-def list_invites():
+def list_rooms():
     return query("""
-    select * from invite
-    """)
-    
-def list_stores():
-    return query("""
-    select store.name, server.url
-    from store
+    select room.name || '@' || server.url
+    from room
     join server
-    on store.server = server.id
+    on room.server = server.id
     """)
 
 def list_addresses():
@@ -44,8 +41,68 @@ def list_addresses():
     on address.server = server.id
     """)
 
+# TODO: là là ici là
+def list_invites():
+    pass
+
+# get
+
+def get_server(url):
+    server = query("""
+    select * from server
+    where url = ?
+    """, [url])[0]
+    return {
+        "id": server[0],
+        "url": server[1],
+    }
+
+def get_room(name, server):
+    room = query("""
+    select
+        room.id,
+        room.auth,
+        room.sym_key,
+        room.data_file
+    from room
+    join server
+    on room.server = server.id
+
+    where room.name = ? and server.url = ?
+    """, [name, server])[0]
+    # TODO:
+    return {
+        "id": room[0],
+        "name": name,
+        "server": server,
+        "auth": room[1],
+        "sym_key": room[2],
+        "data_file": room[3],
+    }
+
+def get_address(name, server):
+    address = query("""
+    select
+        address.id,
+        address.auth,
+        address.key_name
+    from address
+    join server
+    on address.server = server.id
+
+    where address.name = ? and server.url = ?
+    """, [name, server])[0]
+    return {
+        "id": address[0],
+        "name": name,
+        "server": server,
+        "auth": address[1],
+        "key_name": address[2],
+    }
 
 
+
+# add
 
 def add_server(url):
     query("""
@@ -53,25 +110,25 @@ def add_server(url):
     values (?)
     """, [url])
 
-def add_store(name, server, auth, aes_key, data_dir):
-    return query("""
-    insert into store (name, server, auth, aes_key, data_dir)
-    values (?,
-        (select id from server
-        where url = ?),
-        ?, ?, ?)
-    """, [name, server, auth, aes_key, data_dir])
+def add_room(name, server, auth, sym_key, data_file):
+    server_id = get_server(server)["id"]
+
+    query("""
+    insert into room (name, server, auth, sym_key, data_file)
+    values (?, ?, ?, ?, ?)
+    """, [name, server_id, auth, sym_key, data_file])
 
 def add_address(name, server, auth, key_name):
     if server not in list_servers():
         add_server(server)
-    return query("""
+    server_id = get_server(server)["id"]
+    query("""
     insert into address (name, server, auth, key_name)
-    values (?,
-        (select id from server
-        where url = ?),
-        ?, ?)
-    """, [name, server, auth, key_name])
+    values (?, ?, ?, ?)
+    """, [name, server_id, auth, key_name])
+
+
+# TODO: là là ici là
 
 #def add_invite(a
 
@@ -81,34 +138,6 @@ def add_address(name, server, auth, key_name):
 
 
 
-
-def get_address(name, server):
-    return query("""
-    select address.name, address.auth, address.key_name, server.url
-    from address
-    join server
-    on server.id = address.server
-
-    where address.name = ? and server.url = ?
-    """, [name, server])[0]
-
-
-def get_store(address, server):
-    return query("""
-    select store.*, server.url
-    from store
-    join server
-    on store.server = server.id
-
-    where store.address = ? and server.url = ?
-    """, [address, server])[0]
-
-
-def get_message_address(address, server):
-    ("""
-    select query.*
-    """)
-    pass
 
 def remove_invite(invite_id):
     return query("""
