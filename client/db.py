@@ -26,20 +26,22 @@ def list_servers():
     return [server[0] for server in servers]
 
 def list_rooms():
-    return query("""
+    rooms = query("""
     select room.name || '@' || server.url
     from room
     join server
     on room.server = server.id
     """)
+    return [room[0] for room in rooms]
 
 def list_addresses():
-    return query("""
+    addresses = query("""
     select address.name, server.url
     from address
     join server
     on address.server = server.id
     """)
+    return [address[0] for address in addresses]
 
 # TODO: là là ici là
 def list_invites():
