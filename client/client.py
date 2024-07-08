@@ -3,6 +3,7 @@ from uuid import uuid4 as uuid
 from random import choice
 import argparse
 import os
+import sys
 
 import net
 import system
@@ -21,7 +22,6 @@ subparsers = parser.add_subparsers(
         help='command',
         required=True,
         )
-#send_invite_parser = subparsers.add_parser("send-invite")
 # subparsers
 sub = subparsers.add_parser("add-server")
 sub.add_argument("host")
@@ -43,6 +43,10 @@ sub = subparsers.add_parser("read-addresses")
 sub = subparsers.add_parser("read-address")
 sub.add_argument("address")
 
+sub = subparsers.add_parser("send-invite")
+sub.add_argument("address", help="sent to address")
+sub.add_argument("room", help="invite to room")
+
 sub = subparsers.add_parser("clean-address")
 sub.add_argument("address")
 
@@ -51,6 +55,19 @@ sub.add_argument("room")
 
 sub = subparsers.add_parser("write-room")
 sub.add_argument("room")
+
+
+# used by humans
+sub = subparsers.add_parser("describe")
+
+
+
+sub = subparsers.add_parser("import-address")
+# TODO: find a syntax to export/import owned addresses
+#sub.add_argument("auth", nargs="?", default=None)
+
+sub = subparsers.add_parser("export-address")
+sub.add_argument("address")
 
 
 
@@ -72,9 +89,49 @@ match args.command:
         for room in db.list_rooms():
             print(room)
 
+
+    case "describe":
+        servers = db.list_servers()
+        print("servers:")
+        for s in servers:
+            print(s)
+
+        rooms = db.list_rooms()
+        print("rooms:")
+        for r in rooms:
+            print(r)
+
+        print('addresses:')
+
+        for a in db.list_addresses():
+            if a.auth:
+                print(f"{a}\t(owned)")
+            else:
+                print(f'{a}\t(foreign)')
+
     # config
     case "add-server":
         db.add_server(args.host)
+
+    case "import-address":
+        address = input()
+        name, server = address.split("@")
+        key = sys.stdin.read()
+        key_name = system.save_key(key)
+        address = Address(
+                name,
+                server,
+                auth=None,
+                key=key_name
+                )
+        db.add_address(address)
+        print('ok')
+
+    case "export-address":
+        address = db.get_address(args.address)
+        print(address)
+        with open(f'data/keys/{address.key}.public.asc') as f:
+            print(f.read())
 
     # server interaction
     case "new-address":
@@ -116,7 +173,6 @@ match args.command:
     # fetch updates for one address
     case "read-addresses":
         for address in db.list_addresses():
-            # TODO: decrypt invites (encrypted json)
             messages = net.read_messages(address)
             print(f"{address}:")
             #print(messages)
@@ -134,7 +190,12 @@ match args.command:
             print(invite)
 
     case "send-invite":
-        pass
+        room = db.get_room(args.room)
+        # TODO: test add-address first
+        address = db.get_address(args.address)
+        invite = communication.create_invite(room, address)
+        # TODO
+        print(invite)
 
     # fetch updates
     case "pull":
@@ -213,63 +274,4 @@ def send_invite_message(address, server):
         'server': store_server,
         'key': symetric_key,
     }
-
-
-
-
-
-
-"""
-message
-"""
-
-#message_auth = str(uuid())
-#
-#post('message/register')
-#message_address = post('/message/register', {
-#    'auth': message_auth,
-#})
-#
-#get(f'message/{message_address}', {
-#    'auth': message_auth,
-#})
-#
-#post(f'message/{message_address}', {
-#    'data': 'hi',
-#})
-#
-#messages = get(f'message/{message_address}', {
-#    'auth': message_auth,
-#})
-#
-#ids = [message['id'] for message in messages]
-
-
-
-"""
-store
-"""
-
-#store_auth = str(uuid())
-#
-#post('store/register')
-#
-#store_address = post('store/register', {
-#    'auth': store_auth,
-#})
-#
-#get(f'store/{store_address}')
-#get(f'store/{store_address}', {
-#    'auth': store_auth,
-#})
-#
-#post(f'store/{store_address}')
-#post(f'store/{store_address}', {
-#    'auth': store_auth,
-#    'data': 'storage',
-#})
-#
-#get(f'store/{store_address}', {
-#    'auth': store_auth,
-#})
 

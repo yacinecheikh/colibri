@@ -69,4 +69,11 @@ def create_room():
             syscall(f'touch data/rooms/{name}')
             return name
 
+def save_key(public_key):
+    while True:
+        name = str(uuid())
+        if not os.path.exists(f"data/keys/{name}.public.asc"):
+            with open(f'data/keys/{name}.public.asc', 'w') as f:
+                f.write(public_key)
+            return name
 
