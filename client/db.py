@@ -41,8 +41,8 @@ def list_rooms():
     join server
     on room.server = server.id
     """)
-    for room in rooms:
-        yield Room(*room)
+    rooms = [Room(*room) for room in rooms]
+    return rooms
 
 def list_addresses():
     addresses = query("""
@@ -55,8 +55,8 @@ def list_addresses():
     join server
     on address.server = server.id
     """)
-    for address in addresses:
-        yield Address(*address)
+    addresses = [Address(*address) for address in addresses]
+    return addresses
 
 # TODO:
 def list_invites():
@@ -64,7 +64,8 @@ def list_invites():
 
 # get
 
-def get_room(name, server):
+def get_room(url):
+    name, server = url.split('@')
     room = query("""
     select
         room.name,
@@ -80,7 +81,8 @@ def get_room(name, server):
     """, [name, server])[0]
     return Room(*room)
 
-def get_address(name, server):
+def get_address(url):
+    name, server = url.split('@')
     address = query("""
     select
         address.name,

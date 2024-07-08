@@ -12,6 +12,9 @@ class Address:
     def __str__(self):
         return f"{self.name}@{self.server}"
 
+    def __repr__(self):
+        return str(self)
+
 @dataclass
 class Room:
     name: str
@@ -22,6 +25,9 @@ class Room:
 
     def __str__(self):
         return f"{self.name}@{self.server}"
+
+    def __repr__(self):
+        return str(self)
 
 
 # server is just a url
