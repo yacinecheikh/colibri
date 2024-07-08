@@ -9,6 +9,7 @@ def create_invite(room, address):
         "address": str(address),
         "key": room.key,
     }
+    #print(message)
     message = json.dumps(message)
     return system.encrypt(address.key, message)
 
@@ -17,3 +18,5 @@ def decode_invite(data, address):
     message = json.loads(decoded)
     return message
 
+def accept_invite(invite):
+    pass

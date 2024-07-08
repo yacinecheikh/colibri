@@ -47,8 +47,8 @@ sub = subparsers.add_parser("send-invite")
 sub.add_argument("address", help="sent to address")
 sub.add_argument("room", help="invite to room")
 
-sub = subparsers.add_parser("clean-address")
-sub.add_argument("address")
+sub = subparsers.add_parser("delete-message")
+sub.add_argument("message")
 
 sub = subparsers.add_parser("read-room")
 sub.add_argument("room")
@@ -91,18 +91,17 @@ match args.command:
 
 
     case "describe":
-        servers = db.list_servers()
         print("servers:")
+        servers = db.list_servers()
         for s in servers:
             print(s)
 
-        rooms = db.list_rooms()
         print("rooms:")
+        rooms = db.list_rooms()
         for r in rooms:
             print(r)
 
         print('addresses:')
-
         for a in db.list_addresses():
             if a.auth:
                 print(f"{a}\t(owned)")
@@ -125,7 +124,7 @@ match args.command:
                 key=key_name
                 )
         db.add_address(address)
-        print('ok')
+        print("ok")
 
     case "export-address":
         address = db.get_address(args.address)
@@ -152,7 +151,9 @@ match args.command:
     case "new-room":
         # currently, all symetric keys are AES128 random bytes
         # AES128 -> 16 random bytes
-        key = os.urandom(16)
+        #key = os.urandom(16)
+        # bytes cannot be serialized as json
+        key = str(uuid())
         auth = str(uuid())
         server = args.server
         if server is None:
@@ -185,16 +186,31 @@ match args.command:
         url = args.address
         address = db.get_address(url)
         messages = net.read_messages(address)
+        #print(messages)
+        messages = net.read_messages(address)
         for message in messages:
-            invite = communication.decode_invite(message, address)
+            #print(message)
+            print(message["id"])
+            invite = communication.decode_invite(message["data"], address)
             print(invite)
+            name, server = invite["room"].split("@")
+            # TODO:
+            #auth = invite["auth"]
+            auth = None
+            key = invite["key"]
+
+    # TODO: store messages in the database and link an id with their source server+id
+    #case "delete-message":
+    #    message = args.message
+    #    net.delete_messages(
 
     case "send-invite":
         room = db.get_room(args.room)
-        # TODO: test add-address first
+        print("room:", room)
         address = db.get_address(args.address)
+        print("address:", address)
         invite = communication.create_invite(room, address)
-        # TODO
+        net.send_message(address, invite)
         print(invite)
 
     # fetch updates

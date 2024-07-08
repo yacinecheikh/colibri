@@ -132,6 +132,7 @@ def add_address(address):
     values (?, ?, ?, ?)
     """, [address.name, server_id, address.auth, address.key])
 
+#def add_message(server, 
 
 # TODO:
 

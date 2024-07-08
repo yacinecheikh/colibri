@@ -40,6 +40,11 @@ def read_messages(address: Address):
         "auth": address.auth,
     })
 
+def send_message(address: Address, data):
+    return post(f"{address.server}/address/{address.name}", {
+        "data": data,
+    })
+
 def delete_messages(address: Address, message_names):
     return delete(f"{address.server}/address/{address.name}", {
         "auth": address.auth,

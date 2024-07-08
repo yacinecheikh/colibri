@@ -33,3 +33,16 @@ class Room:
 # server is just a url
 # message ?
 # invite
+@dataclass
+class Invite:
+    # Room invitation
+    name: str
+    server: str
+    auth: str
+    key: str
+
+@dataclass
+class Message:
+    name: str
+    server: str
+    data: str
