@@ -1,5 +1,8 @@
 import sqlite3
 
+from datatypes import Room, Address
+
+
 db = sqlite3.connect("data/db.sqlite3")
 
 # initialize table structures
@@ -9,8 +12,9 @@ with open("init.sql") as f:
 def query(*args):
     "wrapper over sqlite connection methods"
     cursor = db.execute(*args)
+    results = cursor.fetchall()
     db.commit()
-    return cursor.fetchall()
+    return results
 
 
 """
@@ -27,42 +31,44 @@ def list_servers():
 
 def list_rooms():
     rooms = query("""
-    select room.name || '@' || server.url
+    select
+        room.name,
+        server.url,
+        room.auth,
+        room.sym_key,
+        room.data_file
     from room
     join server
     on room.server = server.id
     """)
-    return [room[0] for room in rooms]
+    for room in rooms:
+        yield Room(*room)
 
 def list_addresses():
     addresses = query("""
-    select address.name, server.url
+    select
+        address.name,
+        server.url,
+        address.auth,
+        address.key_name
     from address
     join server
     on address.server = server.id
     """)
-    return [address[0] for address in addresses]
+    for address in addresses:
+        yield Address(*address)
 
-# TODO: là là ici là
+# TODO:
 def list_invites():
     pass
 
 # get
 
-def get_server(url):
-    server = query("""
-    select * from server
-    where url = ?
-    """, [url])[0]
-    return {
-        "id": server[0],
-        "url": server[1],
-    }
-
 def get_room(name, server):
     room = query("""
     select
-        room.id,
+        room.name,
+        server.url,
         room.auth,
         room.sym_key,
         room.data_file
@@ -72,20 +78,13 @@ def get_room(name, server):
 
     where room.name = ? and server.url = ?
     """, [name, server])[0]
-    # TODO:
-    return {
-        "id": room[0],
-        "name": name,
-        "server": server,
-        "auth": room[1],
-        "sym_key": room[2],
-        "data_file": room[3],
-    }
+    return Room(*room)
 
 def get_address(name, server):
     address = query("""
     select
-        address.id,
+        address.name,
+        server.url,
         address.auth,
         address.key_name
     from address
@@ -94,51 +93,47 @@ def get_address(name, server):
 
     where address.name = ? and server.url = ?
     """, [name, server])[0]
-    return {
-        "id": address[0],
-        "name": name,
-        "server": server,
-        "auth": address[1],
-        "key_name": address[2],
-    }
+    return Address(*address)
 
 
 
 # add
 
+# add if not already present and return id
 def add_server(url):
-    query("""
+    existing = query("""
+    select id
+    from server
+    where url = ?
+    """, [url])
+    if existing:
+        return existing[0][0]
+
+    inserted = query("""
     insert into server (url)
     values (?)
+    returning id
     """, [url])
+    return inserted[0][0]
 
-def add_room(name, server, auth, sym_key, data_file):
-    server_id = get_server(server)["id"]
-
+def add_room(room):
+    server_id = add_server(room.server)
     query("""
     insert into room (name, server, auth, sym_key, data_file)
     values (?, ?, ?, ?, ?)
-    """, [name, server_id, auth, sym_key, data_file])
+    """, [room.name, server_id, room.auth, room.key, room.data_file])
 
-def add_address(name, server, auth, key_name):
-    if server not in list_servers():
-        add_server(server)
-    server_id = get_server(server)["id"]
+def add_address(address):
+    server_id = add_server(address.server)
     query("""
     insert into address (name, server, auth, key_name)
     values (?, ?, ?, ?)
-    """, [name, server_id, auth, key_name])
+    """, [address.name, server_id, address.auth, address.key])
 
 
-# TODO: là là ici là
+# TODO:
 
 #def add_invite(a
-
-
-
-
-
-
 
 
 def remove_invite(invite_id):

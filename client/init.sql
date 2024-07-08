@@ -14,7 +14,6 @@ create table if not exists address (
 	-- the server is owned if there is a key for it and an auth password
 	-- foreign addresses only have primary keys
 	auth text,
-	-- name@server may not be a valid folder name
 	key_name text,
 
 	foreign key (server) references server (id)
@@ -30,11 +29,7 @@ create table if not exists room (
 	-- TODO: allow more key types
 	-- currently: AES everywhere
 	sym_key text,
-
-
-	-- room@server may not be a valid folder name
 	data_file text,
-	--data_dir text,
 
 	foreign key (server) references server (id)
 );

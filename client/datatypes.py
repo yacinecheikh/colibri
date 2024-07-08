@@ -18,7 +18,12 @@ class Room:
     server: str
     auth: str
     key: str  # symetric key
+    data_file: str
 
     def __str__(self):
         return f"{self.name}@{self.server}"
 
+
+# server is just a url
+# message ?
+# invite

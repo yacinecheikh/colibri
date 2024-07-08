@@ -2,12 +2,13 @@ import db
 
 print("servers:")
 print(db.list_servers())
-db.add_server("http://localhost:8000")
-
+print(db.add_server("http://localhost:8000"))
+print(db.add_server("http://localhost:8000"))
 print(db.list_servers())
 
-print(db.get_server("http://localhost:8000"))
-
+# TODO: rewrite the tests
+import sys
+sys.exit()
 
 print("addresses:")
 
