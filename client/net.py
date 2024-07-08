@@ -1,5 +1,5 @@
 import requests
-from types import Room, Address
+from datatypes import Room, Address
 
 
 def post(endpoint, data):

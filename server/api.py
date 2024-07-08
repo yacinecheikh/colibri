@@ -30,7 +30,7 @@ class Write(Auth, Data):
     /{addr}: get (auth) -> [(id, data)]
     /{addr}: post (data) -> ok
     /{addr}: delete (auth, [id]) -> [ok]
-/store:
+/room:
     /register: post (auth) -> addr
     /{addr}: get (auth) -> data
     /{addr}: post (auth, data, hash) -> ok
@@ -65,15 +65,15 @@ def remove_messages(uuid: str, req: MessageDelete):
     return 'ok'
 
 
-@app.post('/store/register')
+@app.post('/room/register')
 def store_register(req: Auth):
     return db.add_store(req.auth)
 
-@app.get('/store/{uuid}')
+@app.get('/room/{uuid}')
 def get_store(uuid: str, req: Auth):
     return db.get_store(uuid, req.auth)
 
-@app.post('/store/{uuid}')
+@app.post('/room/{uuid}')
 def set_store(uuid: str, req: Write):
     return db.set_store(uuid, req.auth, req.data)
 

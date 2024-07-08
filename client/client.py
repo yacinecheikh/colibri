@@ -7,6 +7,7 @@ import os
 import net
 import system
 import db
+from datatypes import Address, Room
 
 
 # alternative to arg parsing: use an stdin script ? (while true: input())
@@ -14,8 +15,11 @@ parser = argparse.ArgumentParser(
         prog="client.py",
         description="Colibri CLI client")
 
-#parser.add_argument("command", choices=["list-servers", "list-invites", "list-addresses", "list-rooms"])
-subparsers = parser.add_subparsers(dest="command")
+subparsers = parser.add_subparsers(
+        dest="command",
+        help='command',
+        required=True,
+        )
 #send_invite_parser = subparsers.add_parser("send-invite")
 # subparsers
 sub = subparsers.add_parser("add-server")
@@ -61,11 +65,11 @@ match args.command:
     case "list-invites":
         pass
     case "list-addresses":
-        for (name, server) in db.list_addresses():
-            print(f"{name}@{server}")
+        for address in db.list_addresses():
+            print(address)
     case "list-rooms":
-        for (name, server) in db.list_stores():
-            print(f"{name}@{server}")
+        for room in db.list_rooms():
+            print(room)
 
     # config
     case "add-server":
@@ -74,24 +78,39 @@ match args.command:
     # server interaction
     case "new-address":
         key_name = system.create_key()
-        address_auth = str(uuid())
+        auth = str(uuid())
         server = args.server
         if server is None:
             server = choice(db.list_servers())
-        print(f"generating address on server {server}")
-        address_id = net.register_address(server, address_auth)
-        db.add_address(address_id, server, address_auth, key_name)
+        #print(f"generating address on server {server}")
+        name = net.register_address(server, auth)
+        address = Address(
+            name,
+            server,
+            auth,
+            key_name)
+        db.add_address(address)
+        print(address)
     case "new-room":
+        # currently, all symetric keys are AES128 random bytes
         # AES128 -> 16 random bytes
-        aes_key = os.urandom(16)
-        room_auth = str(uuid())
+        key = os.urandom(16)
+        auth = str(uuid())
         server = args.server
         if server is None:
             server = choice(db.list_servers())
-        print(f"generating room on server {server}")
-        room_id = net.register_store(server, room_auth)
-        room_folder = system.create_store()
-        db.add_store(room_id, server, room_auth, aes_key, room_folder)
+        #print(f"generating room on server {server}")
+        name = net.register_room(server, auth)
+        room_file = system.create_room()
+        room = Room(
+                name,
+                server,
+                auth,
+                key,
+                room_file
+                )
+        db.add_room(room)
+        print(room)
 
     # fetch updates for one address
     case "read-addresses":
