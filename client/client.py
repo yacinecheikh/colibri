@@ -7,6 +7,7 @@ import os
 import net
 import system
 import db
+import communication
 from datatypes import Address, Room
 
 
@@ -114,23 +115,23 @@ match args.command:
 
     # fetch updates for one address
     case "read-addresses":
-        for (name, server) in db.list_addresses():
-            # TODO: remove the [1] (["auth"] instead)
-            auth = db.get_address(name, server)[1]
+        for address in db.list_addresses():
             # TODO: decrypt invites (encrypted json)
-            messages = net.read_messages(name, server, auth)
-            print(f"{name}@{server}:")
-            print(messages)
+            messages = net.read_messages(address)
+            print(f"{address}:")
+            #print(messages)
+            for message in messages:
+                invite = communication.decode_invite(message, address)
+                print(invite)
 
     case "read-address":
-        address = args.address
-        name, server = address.split("@")
-        # TODO: make this readable
-        # TODO: (convert db output to json)
-        auth = db.get_address(name, server)[1]
-        messages = net.read_messages(name, server, auth)
-        # TODO: decrypt invites (encrypted json)
-        print(messages)
+        # <id>@<server>
+        url = args.address
+        address = db.get_address(url)
+        messages = net.read_messages(address)
+        for message in messages:
+            invite = communication.decode_invite(message, address)
+            print(invite)
 
     case "send-invite":
         pass
