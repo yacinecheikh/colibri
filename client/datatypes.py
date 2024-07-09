@@ -30,19 +30,13 @@ class Room:
         return str(self)
 
 
-# server is just a url
-# message ?
-# invite
-@dataclass
-class Invite:
-    # Room invitation
-    name: str
-    server: str
-    auth: str
-    key: str
 
 @dataclass
 class Message:
     name: str
-    server: str
+    # the full Address has to be known in order to decode messages
+    address: Address
     data: str
+
+    def __repr__(self):
+        return f"{self.name}@{self.address}"

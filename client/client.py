@@ -9,7 +9,7 @@ import net
 import system
 import db
 import communication
-from datatypes import Address, Room
+from datatypes import Address, Room, Message
 
 
 # alternative to arg parsing: use an stdin script ? (while true: input())
@@ -189,15 +189,25 @@ match args.command:
         #print(messages)
         messages = net.read_messages(address)
         for message in messages:
+            message = Message(
+                    message["id"],
+                    address,
+                    message["data"]
+                    )
             #print(message)
-            print(message["id"])
-            invite = communication.decode_invite(message["data"], address)
-            print(invite)
+            db.add_message(message)
+            invite = communication.decode_invite(message, address)
             name, server = invite["room"].split("@")
-            # TODO:
-            #auth = invite["auth"]
-            auth = None
-            key = invite["key"]
+            room_file = system.create_room()
+            room = Room(
+                    name,
+                    server,
+                    invite["auth"],
+                    invite["key"],
+                    room_file,
+                    )
+            db.add_room(room)
+            print(room)
 
     # TODO: store messages in the database and link an id with their source server+id
     #case "delete-message":
@@ -206,12 +216,10 @@ match args.command:
 
     case "send-invite":
         room = db.get_room(args.room)
-        print("room:", room)
         address = db.get_address(args.address)
-        print("address:", address)
         invite = communication.create_invite(room, address)
         net.send_message(address, invite)
-        print(invite)
+        print("ok")
 
     # fetch updates
     case "pull":

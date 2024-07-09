@@ -81,6 +81,7 @@ def get_room(url):
     """, [name, server])[0]
     return Room(*room)
 
+# TODO: add bounds checks
 def get_address(url):
     name, server = url.split('@')
     address = query("""
@@ -120,19 +121,55 @@ def add_server(url):
 
 def add_room(room):
     server_id = add_server(room.server)
-    query("""
+    existing = query("""
+    select id
+    from room
+    where name = ? and server = ?
+    """, [room.name, server_id])
+    if existing:
+        return existing[0][0]
+    inserted = query("""
     insert into room (name, server, auth, sym_key, data_file)
     values (?, ?, ?, ?, ?)
+    returning id
     """, [room.name, server_id, room.auth, room.key, room.data_file])
+    return inserted[0][0]
 
 def add_address(address):
     server_id = add_server(address.server)
-    query("""
+    # safety check before inserting
+    # + return the id for further foreign key insertions
+    existing = query("""
+    select id
+    from address
+    where name = ? and server = ?
+    """, [address.name, server_id])
+    if existing:
+        return existing[0][0]
+
+    inserted = query("""
     insert into address (name, server, auth, key_name)
     values (?, ?, ?, ?)
+    returning id
     """, [address.name, server_id, address.auth, address.key])
+    return inserted[0][0]
 
-#def add_message(server, 
+def add_message(message):
+    address_id = add_address(message.address)
+    existing = query("""
+    select id
+    from message
+    where name = ? and address = ?
+    """, [message.name, address_id])
+    if existing:
+        return existing[0][0]
+
+    inserted = query("""
+    insert into message (address, name, data)
+    values (?, ?, ?)
+    returning id
+    """, [address_id, message.name, message.data])
+    return inserted[0][0]
 
 # TODO:
 

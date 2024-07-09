@@ -28,10 +28,10 @@ def syscall(cmd, stdin=None):
     return p.returncode, out
 
 
-def run(profile, cmd):
+def run(profile, cmd, stdin=None):
     info(f"running: {profile}/client.py {cmd}")
-    code, out = syscall(f"cd {profile} && .venv/bin/python client.py {cmd}")
-    info("done")
+    code, out = syscall(f"cd {profile} && .venv/bin/python client.py {cmd}", stdin)
+    debug("done")
     debug(f"return code: {code}")
     info(f"output:\n{out}")
     # the return code is not used by the colibri client
@@ -77,9 +77,9 @@ create_profile("receiver")
 
 room = run("sender", "new-room")[:-1]
 addr = run("receiver", "new-address")[:-1]
+exported = run("receiver", f"export-address {addr}")
+run("sender", "import-address", exported)
+run("sender", f"send-invite {addr} {room}")
+run("receiver", f"read-address {addr}")
 run("sender", "describe")
 run("receiver", "describe")
-print(room)
-print(addr)
-run("sender", f"send-invite {addr} {room}")
-
