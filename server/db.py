@@ -88,6 +88,8 @@ def get_messages(address, auth):
 
 def add_message(address, data):
     # create a free message id
+    # TODO: message ids should be specific to the address
+    # (primary key = (address, id))
     while True:
         identifier = str(uuid())
         res = db.execute("""
