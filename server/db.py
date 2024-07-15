@@ -1,6 +1,7 @@
 import sqlite3
 #import os
 from uuid import uuid4 as uuid
+from hashlib import sha256
 
 db = sqlite3.connect('storage.db', check_same_thread=False)
 
@@ -154,14 +155,26 @@ def get_store(store_id, auth):
     if res:
         return res[0]
 
-def set_store(store_id, auth, data):
-    # TODO: return True if success
-    # TODO: add hashing to prevent collisions and allow clients to synchronize
-    db.execute("""
-    update store
-    set data = ?
+
+def set_store(store_id, auth, data, known_hash: bytes):
+    current_data = db.execute("""
+    select data
+    from store
     where uuid = ?
-      and auth = ?
-    """, (data, store_id, auth))
-    db.commit()
+    and auth = ?
+    """, [store_id, auth]).fetchone()[0]
+    current_hash = sha256()
+    current_hash.update(current_data.encode())
+    current_hash = current_hash.digest()
+    if known_hash == current_hash:
+        db.execute("""
+        update store
+        set data = ?
+        where uuid = ?
+          and auth = ?
+        """, (data, store_id, auth))
+        db.commit()
+        return True
+    else:
+        return False
 

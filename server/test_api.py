@@ -1,5 +1,13 @@
 import requests
 from uuid import uuid4 as uuid
+from hashlib import sha256
+from base64 import b64decode, b64encode
+
+
+def sha(x):
+    h = sha256()
+    h.update(x.encode())
+    return b64encode(h.digest()).decode()
 
 
 url = 'http://localhost:8000'
@@ -38,7 +46,7 @@ address
 address_auth = str(uuid())
 
 post('address/register')
-address = post('/address/register', {
+address = post('address/register', {
     'auth': address_auth,
 })
 
@@ -64,24 +72,26 @@ store
 
 store_auth = str(uuid())
 
-post('store/register')
+post('room/register')
 
-store_address = post('store/register', {
+store_address = post('room/register', {
     'auth': store_auth,
 })
 
-get(f'store/{store_address}')
-get(f'store/{store_address}', {
+get(f'room/{store_address}')
+get(f'room/{store_address}', {
     'auth': store_auth,
 })
 
-post(f'store/{store_address}')
-post(f'store/{store_address}', {
+post(f'room/{store_address}')
+#print(sha(''))
+post(f'room/{store_address}', {
     'auth': store_auth,
     'data': 'storage',
+    'last_hash': sha(''),
 })
 
-get(f'store/{store_address}', {
+get(f'room/{store_address}', {
     'auth': store_auth,
 })
 

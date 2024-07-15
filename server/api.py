@@ -1,6 +1,9 @@
 # from typing import Union
 from typing import List
 
+from hashlib import sha256
+from base64 import b64decode
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 import db
@@ -19,7 +22,7 @@ class MessageDelete(Auth):
     message_ids: List[str]
 
 class Write(Auth, Data):
-    pass
+    last_hash: str
 
 
 
@@ -75,6 +78,9 @@ def get_store(uuid: str, req: Auth):
 
 @app.post('/room/{uuid}')
 def set_store(uuid: str, req: Write):
-    return db.set_store(uuid, req.auth, req.data)
+    h = sha256()
+    h.update(req.data.encode())
+    h = h.hexdigest()
+    return db.set_store(uuid, req.auth, req.data, b64decode(req.last_hash))
 
 
