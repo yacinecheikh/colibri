@@ -7,6 +7,7 @@ from uuid import uuid4 as uuid
 import os
 
 import db
+#from datatypes import KeyPair
 
 
 def syscall(cmd, stdin=None):
@@ -32,8 +33,8 @@ def syscall(cmd, stdin=None):
 gpg calls
 """
 
+# TODO: rename (generates an asymetric key pair)
 def create_key():
-    # return name
     while True:
         name = str(uuid())
         if not os.path.exists(f"data/keys/{name}.public.asc"):
@@ -62,13 +63,7 @@ def sym_decrypt(sym_key, message):
 fs
 """
 
-def create_room():
-    while True:
-        name = str(uuid())
-        if not os.path.exists(f"data/rooms/{name}"):
-            syscall(f'touch data/rooms/{name}')
-            return name
-
+# import a public key
 def save_key(public_key):
     while True:
         name = str(uuid())

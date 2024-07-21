@@ -1,8 +1,8 @@
--- TODO: add more fields (server.trusted,...)
 create table if not exists server (
 	id integer primary key autoincrement,
 
-	url text
+	url text,
+	trusted bool
 );
 
 create table if not exists address (
@@ -29,7 +29,7 @@ create table if not exists room (
 	-- TODO: allow more key types
 	-- currently: AES everywhere
 	sym_key text,
-	data_file text,
+	--data_file text,
 
 	foreign key (server) references server (id)
 );
@@ -41,6 +41,7 @@ create table if not exists message (
 	address integer,
 	name text, -- id to remove the message
 	data text,
+	remote_copy boolean,
 
 	foreign key (address) references address (id)
 );
@@ -49,13 +50,28 @@ create table if not exists message (
 create table if not exists invite (
 	id integer primary key autoincrement,
 
+	-- an invite is contained in a message
 	message integer,
 
 	room_name text,
-	room_server integer,
-	sym_key text,
+	--room_server integer,
+	room_server text,
+	room_auth text,
+	room_key text,
 
-	foreign key (message) references message (id)
-	foreign key (room_server) references server (id)
+	foreign key (message) references message (id) on delete cascade
+	--foreign key (room_server) references server (id)
+);
+
+create table if not exists broadcast (
+	id integer primary key autoincrement,
+
+	name text,
+	server integer,
+	auth text,
+	auth_key text, --asymetric signing key
+	access_key text, --symetric key
+
+	foreign key (server) references server (id)
 );
 

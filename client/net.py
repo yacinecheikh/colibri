@@ -1,5 +1,7 @@
 import requests
-from datatypes import Room, Address
+from datatypes import Room, Address, Server, Message
+
+from typing import List
 
 
 def post(endpoint, data):
@@ -10,43 +12,57 @@ def delete(endpoint, data):
     return requests.delete(endpoint, json=data).json()
 
 
-def register_room(server, auth):
-    store = post(f'{server}/room/register', {
+def register_room(server: Server, auth):
+    room = post(f'{server.url}/room/register', {
         'auth': auth,
     })
-    return store
+    return room
 
-def register_address(server, auth):
-    address = post(f'{server}/address/register', {
+def register_address(server: Server, auth):
+    address = post(f'{server.url}/address/register', {
         'auth': auth,
     })
     return address
 
+def register_broadcast(server: Server, auth):
+    broadcast = post(f'{server.url}/broadcast/register', {
+        'auth': auth,
+    })
+    return broadcast
+
+
 
 # TODO: test
 def read_room(room: Room):
-    return get(f"{room.server}/room/{room.name}", {
+    return get(f"{room.server.url}/room/{room.name}", {
         "auth": room.auth,
     })
 
 def write_room(room: Room, data):
-    return post(f"{room.server}/room/{room.name}", {
+    return post(f"{room.server.url}/room/{room.name}", {
         "auth": room.auth,
         "data": data,
     })
 
 def read_messages(address: Address):
-    return get(f"{address.server}/address/{address.name}", {
+    data = get(f"{address.server.url}/address/{address.name}", {
         "auth": address.auth,
     })
+    messages = []
+    for entry in data:
+        messages.append(Message(
+            name = entry["id"],
+            data = entry["data"],
+            ))
+    return messages
 
 def send_message(address: Address, data):
-    return post(f"{address.server}/address/{address.name}", {
+    return post(f"{address.server.url}/address/{address.name}", {
         "data": data,
     })
 
-def delete_messages(address: Address, message_names):
-    return delete(f"{address.server}/address/{address.name}", {
+def delete_messages(address: Address, message_names: List[str]):
+    return delete(f"{address.server.url}/address/{address.name}", {
         "auth": address.auth,
         "messages": message_names,
     })
