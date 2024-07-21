@@ -1,11 +1,18 @@
 # Protocol
 
 The protocol features:
-- Messages: messages sent to a public key in order to initiate a comminication
-- Communications: initiated communications between 2 (or more ?) users. In a communication, all the users share a common symetric key to edit the communication history. In pratice, this means any user can impersonate anyone in a chat room. This is a feature. Trust me, nothing could go wrong.
-- Nodes: storage servers to keep encrypted messages and communications, ideally without leaking everything.
+- Messages: messages sent to an Address, potentially in order to initiate a communication
+- Rooms: initiated communication channels between 2+ users. In a room, all the users share a common symetric key to edit the communication history. In pratice, this means any user can impersonate anyone in a chat room. This is a feature.
+- Broadcasts: similar to Rooms, except only one person can write and the other users can only read if they received access.
+- Nodes: storage servers to keep encrypted data, route communications to addresses and limit access to the owners. Nodes do not need to be trusted in order to communicate, but a rogue node could try to permanently save every message, chat room history version, and broadcasted content version. This can be tested against by spamming changes to chat rooms and broadcast channels, but it is also trivial to host one's own node.
 
-### Interactions with other users
+# TODO
+
+Update this documentation (especially the part about moving existing chat rooms, and the addition of broadcast channels), and use the proper terms (Communication -> chat room, storage server -> node,...)
+
+
+
+### Interactions between users
 
 Users can:
 - Establish a communication
