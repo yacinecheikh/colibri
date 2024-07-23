@@ -19,7 +19,7 @@ The main complaints I (still) have with these options are:
 - code size: I have yet to find a single messaging system I can audit by myself. This project is supposed to stay small, by reusing the existing and trusted tools like GPG.
 - contact obfuscation: generating new accounts for each conversation should not just be normal, it should be encouraged or even automated. Requiring a phone number to register is clearly against the concept of privacy.
 - plausible deniability: the idea of using a shared symetric for conversations is underused. I think letting security part of the way the end user uses the app will lead to a funny experience for the user, and make security more natural for the end user.
-- Signal requires a phone number to register. At some point I though about automating GPG and pastebin to send encrypted messages without authenticating and from Tor, and that's probably how Colibri came to be.
+- Signal requires a phone number to register. At some point I thought about automating GPG and pastebin to send encrypted messages without authenticating and from Tor, and that's probably how Colibri came to be.
 
 
 ## Protocol
