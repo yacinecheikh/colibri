@@ -32,9 +32,9 @@ The server (node) is where users register new addresses and store their chat his
 To setup your own server: see [the server readme](./server/)
 
 The CLI client is a low level python script to interact with the server and with other users.
-To install the CLI client: see [the client readme](./client/)
+To install the CLI client: see [the client readme](./client/).
 
-## Future plans
+## Future plans
 
 These ideas will not be considered until the base service works.
 
