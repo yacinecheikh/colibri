@@ -43,11 +43,19 @@ def create_key():
     return name
 
 # TODO
-def encrypt(key_name, message):
+def encrypt(key_name, data):
     return syscall(f"./sgpg/encrypt data/keys/{key_name}.public.asc", message)[1]
 
-def decrypt(key_name, message):
+#def encrypt(address: Address, data: str):
+#    encrypted = syscall(f"./sgpg/encrypt data/keys/{address.key}.public.asc", data)
+#    return encrypted
+
+def decrypt(key_name, data):
     return syscall(f"./sgpg/decrypt data/keys/{key_name}.private.asc", message)[1]
+#def decrypt(message: Message):
+#    key = message.address.key
+#    return syscall(f"./sgpg/decrypt data/keys/{key}.private.asc", message.data)[1]
+
 
 # TODO: these commands are not secure
 # any process running "ps aux" can get the passwords of currently running gpg processes

@@ -4,11 +4,12 @@ from random import choice
 import argparse
 import os
 import sys
+import json
 
 import net
 import system
 import db
-import communication
+import messaging
 from datatypes import Address, Room, Message, Server
 
 
@@ -38,8 +39,8 @@ sub.add_argument("host")
 sub = subparsers.add_parser("remove-server")
 sub.add_argument("host")
 
-
-sub = subparsers.add_parser("list-addresses")
+sub = subparsers.add_parser("list-owned-addresses")
+sub = subparsers.add_parser("list-foreign-addresses")
 sub = subparsers.add_parser("new-address")
 #sub.add_argument("server")
 sub.add_argument("server", nargs="?", default=None)  # optional
@@ -78,26 +79,18 @@ sub = subparsers.add_parser("remove-broadcast")
 sub.add_argument("broadcast")
 
 
-# operations:
+# other operations (TODO: sort):
 
-# TODO: rename the operations
-# import/export: owned address
-# show/???: foreign address
-# import foreign address/export known address
+# merge with addresses
+sub = subparsers.add_parser("add-foreign-address")
+sub = subparsers.add_parser("show-address")
+sub.add_argument("address")
 sub = subparsers.add_parser("import-address")
-# TODO: find a syntax to export/import owned addresses
-#sub.add_argument("auth", nargs="?", default=None)
-
 sub = subparsers.add_parser("export-address")
 sub.add_argument("address")
 
 
-
-# fetch new messages at address
-# open invite (from message)
-# send invite (to room) at address
-# send message at address
-
+# fetch new messages
 sub = subparsers.add_parser("read-address")  # server interaction
 sub.add_argument("address")
 
@@ -105,47 +98,39 @@ sub = subparsers.add_parser("open-invite")
 sub.add_argument("address")
 sub.add_argument("message")
 
-# invite messages
+# send an invite message
 sub = subparsers.add_parser("send-invite")
 sub.add_argument("address", help="sent to address")
 sub.add_argument("room", help="invite to room")
 
-# text messages
+# send a text message
 sub = subparsers.add_parser("send-message") # the message is piped to stdin
 sub.add_argument("address")
 
 
-# view signed broadcast content
-# broadcast new signed content
 
+# view signed broadcast content
 sub = subparsers.add_parser("read-broadcast")
 sub.add_argument("broadcast")
+# broadcast new signed content
 sub = subparsers.add_parser("write-broadcast")
 sub.add_argument("broadcast")
 
 
-# view chatroom contents
-# set chatroom contents
 
+# view chatroom contents
 sub = subparsers.add_parser("read-room")
 sub.add_argument("room")
+# set chatroom contents
 sub = subparsers.add_parser("write-room")
 sub.add_argument("room")
 
 
 
 
-# TODO: remove
-# helpers
-sub = subparsers.add_parser("read-addresses")
-# used by humans
-sub = subparsers.add_parser("describe")
-
-
-
-
 args = parser.parse_args()
 
+#print(args)
 
 match args.command:
     case "list-servers":
@@ -166,10 +151,18 @@ match args.command:
     case "remove-server":
         db.remove_server(db.get_server(args.host))
 
+    # addresses
 
-    case "list-addresses":
-        for address in db.list_addresses():
-            print(address)
+    case "list-owned-addresses":
+        addresses = db.list_addresses()
+        for address in addresses:
+            if address.auth is not None:
+                print(address)
+    case "list-foreign-addresses":
+        addresses = db.list_addresses()
+        for address in addresses:
+            if address.auth is None:
+                print(address)
     case "new-address":
         key = system.create_key()  # asymetric key pair
         auth = str(uuid())
@@ -277,132 +270,66 @@ match args.command:
         b = db.get_broadcast(args.broadcast)
         db.remove_broadcast(b)
 
+    # TODO: sort all these operations
 
-"""
-# operations:
-
-# TODO: rename the operations
-# import/export: owned address
-# show/???: foreign address
-# import foreign address/export known address
-sub = subparsers.add_parser("import-address")
-# TODO: find a syntax to export/import owned addresses
-#sub.add_argument("auth", nargs="?", default=None)
-
-sub = subparsers.add_parser("export-address")
-sub.add_argument("address")
-
-
-
-# fetch new messages at address
-# open invite (from message)
-# send invite (to room) at address
-# send message at address
-
-sub = subparsers.add_parser("read-address")  # server interaction
-sub.add_argument("address")
-
-sub = subparsers.add_parser("open-invite")
-sub.add_argument("address")
-sub.add_argument("message")
-
-# invite messages
-sub = subparsers.add_parser("send-invite")
-sub.add_argument("address", help="sent to address")
-sub.add_argument("room", help="invite to room")
-
-# text messages
-sub = subparsers.add_parser("send-message") # the message is piped to stdin
-sub.add_argument("address")
-
-
-# view signed broadcast content
-# broadcast new signed content
-
-sub = subparsers.add_parser("read-broadcast")
-sub.add_argument("broadcast")
-sub = subparsers.add_parser("write-broadcast")
-sub.add_argument("broadcast")
-
-
-# view chatroom contents
-# set chatroom contents
-
-sub = subparsers.add_parser("read-room")
-sub.add_argument("room")
-sub = subparsers.add_parser("write-room")
-sub.add_argument("room")
-
-
-
-
-# TODO: remove
-# helpers
-sub = subparsers.add_parser("read-addresses")
-# used by humans
-sub = subparsers.add_parser("describe")
-
-
-
-
-"""
-
-
-
-
-
-#print(args)
-
-# helpers
-
-match args.command:
-    case "describe":
-        print("servers:")
-        servers = db.list_servers()
-        for s in servers:
-            print(s)
-
-        print("rooms:")
-        rooms = db.list_rooms()
-        for r in rooms:
-            print(r)
-
-        print('addresses:')
-        for a in db.list_addresses():
-            if a.auth:
-                print(f"{a}\t(owned)")
-            else:
-                print(f'{a}\t(foreign)')
-
-    # config
-
-    case "import-address":
+    # address contact exchange
+    case "show-address":
+        # output:
+        # <address@server>
+        # BEGIN PGP PUBLIC KEY
+        # …
+        # END PGP PUBLIC KEY
+        address = db.get_address(args.address)
+        print(address)
+        # TODO: move this path formatting to system (system.find_public(key_name) for example)
+        with open(f'data/keys/{address.key}.public.asc') as f:
+            print(f.read())
+    case "add-foreign-address":
         address = input()
         name, server = address.split("@")
-        key = sys.stdin.read()
-        key_name = system.save_key(key)
+        server = Server(url=server, trusted=False)
+        # TODO: test, should use Server.__eq__()
+        # TODO: check other usages of "if server not in db.list_servers()"
+        if server not in db.list_servers():
+            db.add_server(server)
+        public_key = sys.stdin.read()
+        key_name = system.save_key(public_key)
         address = Address(
-                name,
-                server,
+                name=name,
+                server=server,
                 auth=None,
                 key=key_name
                 )
         db.add_address(address)
         print("ok")
 
-    case "export-address":
+    # private key export
+    case "export-owned-address":
         address = db.get_address(args.address)
-        print(address)
-        with open(f'data/keys/{address.key}.public.asc') as f:
-            print(f.read())
+        exported = {
+            "name": address.name,
+            "server": address.server.url,
+            "auth": address.auth,
+        }
+        with open(f"data/keys/{address.key}.public.asc") as f:
+            exported["public_key"] = f.read()
+        with open(f"data/keys/{address.key}.private.asc") as f:
+            exported["private_key"] = f.read()
 
+        print(json.dumps(exported))
+    case "import-owned-address":
+        # TODO after checking export works
+        pass
+
+    # TODO: all of this has to be sorted
+
+    # fetch updates
     case "read-address":
         # <id>@<server>
         url = args.address
         address = db.get_address(url)
         messages = net.read_messages(address)
         #print(messages)
-        messages = net.read_messages(address)
         for message in messages:
             message = Message(
                     message["id"],
@@ -410,40 +337,69 @@ match args.command:
                     message["data"]
                     )
             #print(message)
-            db.add_message(message)
-            invite = communication.decode_invite(message, address)
-            name, server = invite["room"].split("@")
-            room_file = system.create_room()
-            room = Room(
-                    name,
-                    server,
-                    invite["auth"],
-                    invite["key"],
-                    room_file,
-                    )
-            db.add_room(room)
-            print(room)
+            if db.get_message(address, message.name):
+                # the message was already downloaded -> skip
+                continue
+            decoded = system.decrypt(message)
+            content = json.loads(decoded)
+            # TODO: split depending on message type
+            print(content)
 
-    # TODO: store messages in the database and link an id with their source server+id
-    #case "delete-message":
-    #    message = args.message
-    #    net.delete_messages(
+            #db.add_message(message)
+
+            #invite = messaging.decode_invite(message, address)
+            #name, server = invite["room"].split("@")
+            #room_file = system.create_room()
+            #room = Room(
+            #        name,
+            #        server,
+            #        invite["auth"],
+            #        invite["key"],
+            #        room_file,
+            #        )
+            #db.add_room(room)
+            #print(room)
+
+    # invite messages
+    case "open-invite":
+        # TODO: rewrite (address + message name) to message url (message@address@server)
+        address = db.get_address(args.address)
+        message = db.get_message(address, args.message)
+        invite = db.get_invite(message)
+        db.add_room(invite.room)
 
     case "send-invite":
-        room = db.get_room(args.room)
         address = db.get_address(args.address)
-        invite = communication.create_invite(room, address)
-        net.send_message(address, invite)
-        print("ok")
+        room = db.get_room(args.room)
+        # TODO: encrypt(json({type: invite, invite: {}}))
+        invite = messaging.create_invite(room)
+        print(invite)
+        sent = messaging.address(address, invite)
+        net.send_message(address, sent)
 
-    # fetch updates
-    case "pull":
-        pass
-    # message interactions
+    case "send-message":
+        address = db.get_address(args.address)
+        data = sys.stdin.read()
+        # TODO
+
+    # view signed broadcast content
+    case "read-broadcast":
+        broadcast = db.get_broadcast(args.broadcast)
+        # TODO
+
+    # broadcast new signed content
+    case "write-broadcast":
+        broadcast = db.get_broadcast(args.broadcast)
+        # TODO
+
+    # view chatroom contents
     case "read-room":
-        pass
+        room = db.get_room(args.room)
+        # TODO
+
+    # set chatroom contents
     case "write-room":
-        pass
-    case "accept-invite":
-        pass
+        room = db.get_room(args.room)
+        # TODO
+
 

@@ -26,6 +26,9 @@ class Server:
     def __repr__(self):
         return self.url
 
+    def __eq__(self, other):
+        return self.url == other.url
+
 @dataclass
 class Address:
     name: str

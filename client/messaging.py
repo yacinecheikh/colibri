@@ -1,9 +1,16 @@
 import json
+
 import db
 import system
+from datatypes import Address
 
+def address(addr: Address, data: str):
+    return system.encrypt(address.key, data)
 
-def create_invite(room, address):
+def receive(addr: Address, data: str):
+    return system.decrypt(address.key, data)
+
+def create_invite(room):
     message = {
         "room": str(room),
         #"address": str(address),
@@ -12,7 +19,7 @@ def create_invite(room, address):
     }
     #print(message)
     message = json.dumps(message)
-    return system.encrypt(address.key, message)
+    return message
 
 def decode_invite(message, address):
     # TODO: error handling (if the address is foreign)

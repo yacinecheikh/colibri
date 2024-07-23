@@ -241,6 +241,21 @@ def list_invites():
 
     return invites
 
+def get_invite(message: Message):
+    row = query("""
+    select id, room_name, room_server, room_auth, room_key
+    from invite
+    where message = ?
+    """, [message.id])[0]
+    id, name, server, auth, key = row
+    room = Room(name=name, server=Server(url=server), auth=auth, key=key)
+    invite = Invite(
+            id=id,
+            room=room,
+            )
+
+    return invite
+
 def remove_invite(message: Message):
     query("""
     delete from invite
