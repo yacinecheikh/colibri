@@ -28,14 +28,11 @@ See [PROTOCOL.md](./PROTOCOL.md) for the protocol details.
 
 ## How to use
 
-
 The server (node) is where users register new addresses and store their chat history. It can be run in any configuration, as long as the server can be connected to by the end user.
 To setup your own server: see [the server readme](./server/)
 
 The CLI client is a low level python script to interact with the server and with other users.
 To install the CLI client: see [the client readme](./client/)
-
-
 
 ## Future plans
 
