@@ -20,5 +20,3 @@ def decode_invite(message, address):
     message = json.loads(decoded)
     return message
 
-def accept_invite(invite):
-    pass
