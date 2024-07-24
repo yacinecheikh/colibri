@@ -168,7 +168,7 @@ match args.command:
         auth = str(uuid())
         server_url = args.server
         if server_url is None:
-            server = choice(db.list_servers())
+            server = choice(db.list_trusted_servers())
         else:
             server = db.get_server(server_url)
         #print(f"generating address on server {server}")
@@ -227,7 +227,7 @@ match args.command:
         auth = str(uuid())
         server = args.server
         if server is None:
-            server = choice(db.list_servers())
+            server = choice(db.list_trusted_servers())
         else:
             server = db.get_server(server)
         #print(f"generating room on server {server}")
@@ -254,7 +254,7 @@ match args.command:
             print(b)
     case "new-broadcast":
         if args.server is None:
-            server = choice(db.list_servers())
+            server = choice(db.list_trusted_servers())
         else:
             server = db.get_server(args.server)
         auth = str(uuid())
