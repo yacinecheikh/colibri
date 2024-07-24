@@ -200,7 +200,7 @@ match args.command:
         remote_messages = net.read_messages(address)
         # existing messages will not be duplicated/replaced
         # TODO: update if exists (set remote_copy = TRUE)
-        for m in remote_message:
+        for m in remote_messages:
             db.add_message(m)
     case "remove-message":
         address = db.get_address(args.address)
