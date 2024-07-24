@@ -188,11 +188,13 @@ match args.command:
     case "list-messages":
         address = db.get_address(args.address)
         messages = db.list_messages(address)
-        print(messages)
+        for message in messages:
+            print(message)
     case "list-remote-messages":
         address = db.get_address(args.address)
         messages = db.list_remote_messages(address)
-        print(messages)
+        for message in messages:
+            print(message)
     case "update-messages":
         address = db.get_address(args.address)
         remote_messages = net.read_messages(address)

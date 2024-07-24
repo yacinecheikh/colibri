@@ -37,11 +37,14 @@ def list_servers():
     return servers
 
 def list_trusted_servers():
-    servers = query("""
-    select url from server
+    rows = query("""
+    select id, url from server
     where trusted is true
     """)
-    return [Server(*server) for server in servers]
+    servers = []
+    for (id, url) in rows:
+        servers.append(Server(id=id, url=url, trusted=True))
+    return servers
 
 
 def get_server(url):
@@ -128,7 +131,7 @@ def get_address(url):
     where address.name = ? and server.url = ?
     """, [name, server])[0]
     server = get_server(url)
-    addr = Address(id=id, name=name, server=server, auth=auth, key=key)
+    address = Address(id=id, name=name, server=server, auth=auth, key=key)
     return address
 
 def add_address(address: Address):
@@ -175,7 +178,7 @@ def list_messages(address: Address):
     return messages
 
 def list_remote_messages(address: Address):
-    messages = [m for m in list_messages() if m.remote]
+    return [m for m in list_messages(address) if m.remote]
 
 def add_message(message: Message):
     address_id = add_address(message.address)
