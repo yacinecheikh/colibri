@@ -24,10 +24,17 @@ db operations
 # servers
 
 def list_servers():
-    servers = query("""
-    select url, trusted from server
+    rows = query("""
+    select id, url, trusted from server
     """)
-    return [Server(*server) for server in servers]
+    servers = []
+    for (id, url, trusted) in rows:
+        servers.append(Server(
+            id = id,
+            url = url,
+            trusted = trusted,
+            ))
+    return servers
 
 def list_trusted_servers():
     servers = query("""
@@ -267,40 +274,55 @@ def remove_invite(message: Message):
 # rooms
 
 def list_rooms():
-    rooms = query("""
+    rows = query("""
     select
         room.id,
         room.name,
         server.url,
         room.auth,
-        room.sym_key,
+        room.sym_key
     from room
     join server
     on room.server = server.id
     """)
-    rooms = [Room(*room) for room in rooms]
-    for room in rooms:
-        room.server = get_server(room.server)
+    rooms = []
+    for (id, name, url, auth, key) in rows:
+        room = Room(
+            id=id,
+            name=name,
+            server=get_server(url),
+            auth=auth,
+            key=key,
+        )
+        rooms.append(room)
     return rooms
 
 def get_room(url: str):
     name, server = url.split('@')
-    room = query("""
+    result = query("""
     select
         room.id,
         room.name,
         server.url,
         room.auth,
-        room.sym_key,
-        room.data_file
+        room.sym_key
     from room
     join server
     on room.server = server.id
 
     where room.name = ? and server.url = ?
-    """, [name, server])[0]
-    room = Room(*room)
-    room.server = get_server(room.server)
+    """, [name, server])
+    if not result:
+        return None
+    (id, name, url, auth, key) = result[0]
+    room = Room(
+            id=id,
+            name=name,
+            server=get_server(url),
+            auth=auth,
+            key=key,
+        )
+    return room
 
 
 def add_room(room: Room):
@@ -317,6 +339,12 @@ def add_room(room: Room):
     returning id
     """, [room.name, room.server.id, room.auth, room.key])
     return inserted[0][0]
+
+def remove_room(room: Room):
+    query("""
+    delete from room
+    where id = ?
+    """, [room.id])
 
 
 

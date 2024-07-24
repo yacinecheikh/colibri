@@ -239,10 +239,13 @@ match args.command:
                 key=key,
                 )
         db.add_room(room)
-        print(room)
+        print(db.get_room(f"{room.name}@{room.server}"))
     case "remove-room":
         room = db.get_room(args.room)
-        db.remove_room(room)
+        if room is None:
+            print("The selected room does not exist")
+        else:
+            db.remove_room(room)
 
 
     case "list-broadcasts":
