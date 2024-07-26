@@ -37,6 +37,10 @@ class Write(Auth, Data):
     /register: post (auth) -> addr
     /{addr}: get (auth) -> data
     /{addr}: post (auth, data, hash) -> ok
+/broadcast:
+    /register: post (auth) -> addr
+    /{addr}: get -> data
+    /{addr}: post (auth, data) -> ok
 """
 
 @app.post('/address/register')
@@ -83,4 +87,16 @@ def set_store(uuid: str, req: Write):
     h = h.hexdigest()
     return db.set_store(uuid, req.auth, req.data, b64decode(req.last_hash))
 
+@app.post('/broadcast/register')
+def broadcast_register(req: Auth):
+    return db.add_broadcast(req.auth)
+
+@app.get('/broadcast/{uuid}')
+def read_broadcast(uuid: str):
+    return db.get_broadcast(uuid)
+
+@app.post('/broadcast/{uuid}')
+def set_broadcast(uuid: str, req: Write):
+    db.set_broadcast(uuid, req.auth, req.data)
+    return "ok"
 

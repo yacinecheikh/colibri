@@ -20,8 +20,8 @@ db = sqlite3.connect('storage.db', check_same_thread=False)
 create tables
 
 
--ignore primary/foreign keys constraints
--always use uuid as id (to prevent chronological correlation)
+-ignore primary/foreign keys constraints (temp, to simplify)
+-always use uuid v4 as id (to prevent chronological correlation)
 -hashing is not needed because the generated passwords only unlock encrypted data (simple spam prevention)
 """
 
@@ -38,6 +38,12 @@ create table if not exists address (
 ) without rowid;
 
 create table if not exists store (
+    uuid text primary key,
+    auth text,
+    data text
+) without rowid;
+
+create table if not exists broadcast (
     uuid text primary key,
     auth text,
     data text
@@ -177,4 +183,42 @@ def set_store(store_id, auth, data, known_hash: bytes):
         return True
     else:
         return False
+
+
+
+def add_broadcast(auth):
+    # create a free broadcast id
+    while True:
+        broadcast_id = str(uuid())
+        result = db.execute("""
+        select uuid from broadcast
+        where uuid = ?
+        """, [broadcast_id]).fetchone()
+        if result is None:
+            break
+    db.execute("""
+    insert into broadcast (uuid, auth, data)
+    values (?, ?, '')
+    """, [broadcast_id, auth])
+    db.commit()
+    return broadcast_id
+
+
+def get_broadcast(broadcast_id):
+    res = db.execute("""
+    select data from broadcast
+    where uuid = ?
+    """, [broadcast_id]).fetchone()
+    if res:
+        return res[0]
+
+
+def set_broadcast(broadcast_id, auth, data):
+    db.execute("""
+    update broadcast
+    set data = ?
+    where uuid = ?
+      and auth = ?
+    """, [data, broadcast_id, auth])
+    db.commit()
 
