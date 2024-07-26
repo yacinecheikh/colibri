@@ -48,11 +48,12 @@ def list_trusted_servers():
 
 
 def get_server(url):
-    (id, url, trusted) = query("""
+    row = query("""
     select id, url, trusted
     from server
     where url = ?
     """, [url])[0]
+    (id, url, trusted) = row
     return Server(id=id, url=url, trusted=trusted)
 
 
@@ -366,10 +367,19 @@ def list_broadcasts():
     join server
     on broadcast.server = server.id
     """)
+    broadcasts = []
     for row in rows:
-        b = Broadcast(*row)
-        b.server = get_server(b.server)
-        yield b
+        (id, name, url, auth, auth_key, access_key) = row
+        b = Broadcast(
+            id=id,
+            name=name,
+            server=get_server(url),
+            auth=auth,
+            auth_key=auth_key,
+            access_key=access_key,
+        )
+        broadcasts.append(b)
+    return broadcasts
 
 def get_broadcast(url):
     name, server = url.split("@")

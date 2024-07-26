@@ -10,7 +10,7 @@ import net
 import system
 import db
 import messaging
-from datatypes import Address, Room, Message, Server
+from datatypes import Address, Room, Message, Server, Broadcast
 
 
 # alternative to arg parsing: use an stdin script ? (while true: input())
@@ -214,7 +214,9 @@ match args.command:
 
     case "list-invites":
         invites = db.list_invites()
-        print(invites)
+        for invite in invites:
+            # TODO: print message@address@server and room@server
+            print(invite)
     # invites are removed along with their containing message
 
 

@@ -90,3 +90,6 @@ class Broadcast:
     access_key: str  # symetric key
     id: Id = None
 
+    def __repr__(self):
+        return f"{self.name}@{self.server}"
+
