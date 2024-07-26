@@ -8,6 +8,7 @@ import json
 
 import net
 import system
+import gpg
 import db
 import messaging
 from datatypes import Address, Room, Message, Server, Broadcast
@@ -164,7 +165,7 @@ match args.command:
             if address.auth is None:
                 print(address)
     case "new-address":
-        key = system.create_key()  # asymetric key pair
+        key = gpg.create_key()  # asymetric key pair
         auth = str(uuid())
         server_url = args.server
         if server_url is None:
@@ -263,7 +264,7 @@ match args.command:
             server = db.get_server(args.server)
         auth = str(uuid())
         name = net.register_broadcast(server, auth)
-        auth_key = system.create_key()
+        auth_key = gpg.create_key()
         access_key = str(uuid())
         b = Broadcast(
                 name = name,
@@ -288,8 +289,7 @@ match args.command:
         # END PGP PUBLIC KEY
         address = db.get_address(args.address)
         print(address)
-        # TODO: move this path formatting to system (system.find_public(key_name) for example)
-        with open(f'data/keys/{address.key}.public.asc') as f:
+        with open(system.public_key(address.key)) as f:
             print(f.read())
     case "add-foreign-address":
         address = input()
@@ -318,9 +318,9 @@ match args.command:
             "server": address.server.url,
             "auth": address.auth,
         }
-        with open(f"data/keys/{address.key}.public.asc") as f:
+        with open(system.public_key(address.key)) as f:
             exported["public_key"] = f.read()
-        with open(f"data/keys/{address.key}.private.asc") as f:
+        with open(system.private_key(address.key)) as f:
             exported["private_key"] = f.read()
 
         print(json.dumps(exported))
@@ -347,7 +347,7 @@ match args.command:
             if db.get_message(address, message.name):
                 # the message was already downloaded -> skip
                 continue
-            decoded = system.decrypt(message)
+            decoded = gpg.receive(message)
             content = json.loads(decoded)
             # TODO: split depending on message type
             print(content)
@@ -392,12 +392,36 @@ match args.command:
     # view signed broadcast content
     case "read-broadcast":
         broadcast = db.get_broadcast(args.broadcast)
-        # TODO
+        data = net.read_broadcast(broadcast)
+        #print(data)
+        decrypted = gpg.decrypt(broadcast.access_key, data)
+        #print(decrypted)
+        payload = json.loads(decrypted)
+        #print(payload)
+        correct_signature = gpg.verify(broadcast.auth_key, payload["data"], payload["signature"])
+        if not correct_signature:
+            print("ERROR: incorrect signature. This broadcasted content may be corrupt, or insecure")
+            sys.exit()
+
+        # TODO: save read content in the database, with the last fetch date
+        # (create a broadcast_content table and a room_content table)
 
     # broadcast new signed content
     case "write-broadcast":
         broadcast = db.get_broadcast(args.broadcast)
-        # TODO
+        with open("/dev/stdin") as f:
+            data = f.read()
+        #print(data)
+        signature = gpg.sign(broadcast.auth_key, data)
+        broadcasted = {
+            "data": data,
+            "signature": signature,
+        }
+        broadcasted = json.dumps(broadcasted)
+        #print(broadcasted)
+        encrypted = gpg.encrypt(broadcast.access_key, broadcasted)
+        #print(encrypted)
+        print(net.write_broadcast(broadcast, encrypted))
 
     # view chatroom contents
     case "read-room":

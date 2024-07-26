@@ -20,8 +20,9 @@ def create_key():
 
 # asymetric encryption (key is the name matching with {key}.public.asc and {key}.private.asc)
 def sign(key, message):
+    # need to save to files because the sgpg wrapper scripts can only sign files
     name = system.save_message(message)
-    syscall(f"./sgpg/sign {system.private_key(key)} {system.signature(name)}")
+    syscall(f"./sgpg/sign {system.private_key(key)} {system.message(name)}")
     with open(system.signature(name)) as f:
         return f.read()
 
@@ -30,7 +31,9 @@ def verify(key, message, signature):
     # keys are only imported once, but messages and signatures are imported/removed only as temporary files
     name = system.save_message(message, signature)
     # TODO: use return code to check success
-    return syscall(f"./sgpg/verify {system.public_key(key)} {system.message(name)}")
+    return_code, out, err = syscall(f"./sgpg/verify {system.public_key(key)} {system.message(name)}")
+    # sgpg/verify exits with 0 if the signature is correct
+    return return_code == 0
 
 def send(key, message):
     return syscall(f"./sgpg/encrypt {system.public_key_file(key)}", message)[1]
@@ -47,8 +50,8 @@ def receive(key, encrypted):
 # symetric encryption (key is a string)
 def encrypt(key, data):
     # TODO: [1]
-    return syscall(f"gpg --armor --batch --passphrase {passphrase} -c", data)
+    return syscall(f"gpg --armor --batch --passphrase {key} -c", data)[1]
 
 def decrypt(key, data):
-    return syscall(f"gpg --batch --passphrase {passphrase} -d", data)
+    return syscall(f"gpg --batch --passphrase {key} -d", data)[1]
 

@@ -1,5 +1,5 @@
 import requests
-from datatypes import Room, Address, Server, Message
+from datatypes import Room, Address, Server, Message, Broadcast
 
 from typing import List
 
@@ -43,6 +43,17 @@ def write_room(room: Room, data):
         "auth": room.auth,
         "data": data,
     })
+
+
+def read_broadcast(b: Broadcast):
+    return get(f"{b.server.url}/broadcast/{b.name}", {})
+
+def write_broadcast(b: Broadcast, data):
+    return post(f"{b.server.url}/broadcast/{b.name}", {
+        "auth": b.auth,
+        "data": data
+    })
+
 
 def read_messages(address: Address):
     data = get(f"{address.server.url}/address/{address.name}", {
