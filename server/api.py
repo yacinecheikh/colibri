@@ -21,9 +21,11 @@ class Data(BaseModel):
 class MessageDelete(Auth):
     message_ids: List[str]
 
-class Write(Auth, Data):
+class RoomWrite(Auth, Data):
     last_hash: str
 
+class BroadcastWrite(Auth, Data):
+    pass
 
 
 
@@ -81,7 +83,7 @@ def get_store(uuid: str, req: Auth):
     return db.get_store(uuid, req.auth)
 
 @app.post('/room/{uuid}')
-def set_store(uuid: str, req: Write):
+def set_store(uuid: str, req: RoomWrite):
     h = sha256()
     h.update(req.data.encode())
     h = h.hexdigest()
@@ -96,7 +98,7 @@ def read_broadcast(uuid: str):
     return db.get_broadcast(uuid)
 
 @app.post('/broadcast/{uuid}')
-def set_broadcast(uuid: str, req: Write):
+def set_broadcast(uuid: str, req: BroadcastWrite):
     db.set_broadcast(uuid, req.auth, req.data)
     return "ok"
 
