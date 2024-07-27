@@ -47,6 +47,9 @@ sub = subparsers.add_parser("new-address")
 sub.add_argument("server", nargs="?", default=None)  # optional
 sub = subparsers.add_parser("remove-address")
 sub.add_argument("address")
+sub = subparsers.add_parser("import-address")
+sub = subparsers.add_parser("export-address")
+sub.add_argument("address")
 
 
 sub = subparsers.add_parser("list-messages")
@@ -70,6 +73,9 @@ sub = subparsers.add_parser("new-room")
 sub.add_argument("server", nargs="?", default=None)  # optional
 sub = subparsers.add_parser("remove-room")
 sub.add_argument("room")
+sub = subparsers.add_parser("import-room")
+sub = subparsers.add_parser("export-room")
+sub.add_argument("room")
 
 
 sub = subparsers.add_parser("list-broadcasts")
@@ -78,6 +84,9 @@ sub = subparsers.add_parser("new-broadcast")
 sub.add_argument("server", nargs="?", default=None)  # optional
 sub = subparsers.add_parser("remove-broadcast")
 sub.add_argument("broadcast")
+sub = subparsers.add_parser("import-broadcast")
+sub = subparsers.add_parser("export-broadcast")
+sub.add_argument("broadcast")
 
 
 # other operations (TODO: sort):
@@ -85,9 +94,6 @@ sub.add_argument("broadcast")
 # merge with addresses
 sub = subparsers.add_parser("add-foreign-address")
 sub = subparsers.add_parser("show-address")
-sub.add_argument("address")
-sub = subparsers.add_parser("import-address")
-sub = subparsers.add_parser("export-address")
 sub.add_argument("address")
 
 
@@ -189,6 +195,48 @@ match args.command:
         address = db.get_address(args.address)
         db.remove_address(address)
 
+    case "export-address":
+        address = db.get_address(args.address)
+        exported = {
+            "name": address.name,
+            "server": address.server.url,
+            "auth": address.auth,
+        }
+        with open(system.public_key(address.key)) as f:
+            exported["public_key"] = f.read()
+        with open(system.private_key(address.key)) as f:
+            exported["private_key"] = f.read()
+
+        print(json.dumps(exported))
+    case "import-address":
+        with open("/dev/stdin") as f:
+            imported = f.read()
+        imported = json.loads(imported)
+        address_url = f'{imported["name"]}@{imported["server"]}'
+        address = db.get_address(address_url)
+        if address is not None:
+            print(f"address {address} was already imported. skipping", file=sys.stderr)
+            sys.exit()
+        server = db.get_server(imported["server"])
+        if server is None:
+            print("warning: importing address from unknown server {server}, adding {server} as trusted", file=sys.stderr)
+            server = Server(
+                    url=imported["server"],
+                    trusted=True
+                    )
+            db.add_server(server)
+        key = system.save_key(imported["public_key"], imported["private_key"])
+        address = Address(
+                name=imported["name"],
+                server=server,
+                auth=imported["auth"],
+                key=key,
+                )
+        db.add_address(address)
+        print("ok")
+
+
+
 
     case "list-messages":
         address = db.get_address(args.address)
@@ -260,6 +308,8 @@ match args.command:
         else:
             db.remove_room(room)
 
+    # TODO: import/export-room
+
 
     case "list-broadcasts":
         broadcasts = db.list_broadcasts()
@@ -290,6 +340,8 @@ match args.command:
         b = db.get_broadcast(args.broadcast)
         db.remove_broadcast(b)
 
+    # TODO: import/export-broadcast
+
     # TODO: sort all these operations
 
     # address contact exchange
@@ -318,47 +370,6 @@ match args.command:
                 server=server,
                 auth=None,
                 key=key_name
-                )
-        db.add_address(address)
-        print("ok")
-
-    # private key export
-    case "export-address":
-        address = db.get_address(args.address)
-        exported = {
-            "name": address.name,
-            "server": address.server.url,
-            "auth": address.auth,
-        }
-        with open(system.public_key(address.key)) as f:
-            exported["public_key"] = f.read()
-        with open(system.private_key(address.key)) as f:
-            exported["private_key"] = f.read()
-
-        print(json.dumps(exported))
-    case "import-address":
-        with open("/dev/stdin") as f:
-            imported = f.read()
-        imported = json.loads(imported)
-        address_url = f'{imported["name"]}@{imported["server"]}'
-        address = db.get_address(address_url)
-        if address is not None:
-            print(f"address {address} was already imported. skipping")
-            sys.exit()
-        server = db.get_server(imported["server"])
-        if server is None:
-            print("warning: importing address from unknown server {server}, adding {server} as trusted", file=sys.stderr)
-            server = Server(
-                    url=imported["server"],
-                    trusted=True
-                    )
-            db.add_server(server)
-        key = system.save_key(imported["public_key"], imported["private_key"])
-        address = Address(
-                name=imported["name"],
-                server=server,
-                auth=imported["auth"],
-                key=key,
                 )
         db.add_address(address)
         print("ok")
