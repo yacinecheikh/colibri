@@ -150,6 +150,7 @@ def add_address(address: Address):
     where name = ? and server = ?
     """, [address.name, address.server.id])
     if existing:
+        #print("existing")
         return existing[0][0]
 
     inserted = query("""
@@ -157,6 +158,7 @@ def add_address(address: Address):
     values (?, ?, ?, ?)
     returning id
     """, [address.name, address.server.id, address.auth, address.key])
+    #print("inserted")
     return inserted[0][0]
 
 def remove_address(address: Address):
@@ -223,61 +225,61 @@ def remove_message(message: Message):
 # TODO: find a way to shorten this join
 # (get db object by id ? require address ? iterate over messages ? use message@addr@host syntax ?)
 # (for addr in list_addresses(): for message in list_messages():)
-def list_invites():
-    entries = query("""
-    select
-        invite.id,
-        invite.room_name,
-        invite.room_server,
-        invite.room_auth,
-        invite.room_key,
+#def list_invites():
+#    entries = query("""
+#    select
+#        invite.id,
+#        invite.room_name,
+#        invite.room_server,
+#        invite.room_auth,
+#        invite.room_key,
+#
+#        message.name,
+#        address.name,
+#        server.url
+#    from invite
+#
+#    join message
+#    on invite.message = message.id
+#
+#    join address
+#    on message.address = address.id
+#
+#    join server
+#    on address.server = server.id
+#    """)
+#    invites = []
+#    for (id, room_name, room_serv, room_auth, room_key, message_name, address_name, server_url) in entries:
+#        address = get_address(f"{address_name}@{server_url}")
+#        message = get_message(address, message_name)
+#
+#        # TODO: get server if it exists (in case the server is trusted)
+#        server = Server(url=room_serv, trusted=False)
+#        room = Room(name=room_name, server=server, auth=room_auth, key=room_key)
+#        invites.append(Invite(id=id, room=room))
+#
+#    return invites
 
-        message.name,
-        address.name,
-        server.url
-    from invite
+#def get_invite(message: Message):
+#    row = query("""
+#    select id, room_name, room_server, room_auth, room_key
+#    from invite
+#    where message = ?
+#    """, [message.id])[0]
+#    id, name, server, auth, key = row
+#    room = Room(name=name, server=Server(url=server), auth=auth, key=key)
+#    invite = Invite(
+#            id=id,
+#            room=room,
+#            )
+#
+#    return invite
 
-    join message
-    on invite.message = message.id
-
-    join address
-    on message.address = address.id
-
-    join server
-    on address.server = server.id
-    """)
-    invites = []
-    for (id, room_name, room_serv, room_auth, room_key, message_name, address_name, server_url) in entries:
-        address = get_address(f"{address_name}@{server_url}")
-        message = get_message(address, message_name)
-
-        # TODO: get server if it exists (in case the server is trusted)
-        server = Server(url=room_serv, trusted=False)
-        room = Room(name=room_name, server=server, auth=room_auth, key=room_key)
-        invites.append(Invite(id=id, room=room))
-
-    return invites
-
-def get_invite(message: Message):
-    row = query("""
-    select id, room_name, room_server, room_auth, room_key
-    from invite
-    where message = ?
-    """, [message.id])[0]
-    id, name, server, auth, key = row
-    room = Room(name=name, server=Server(url=server), auth=auth, key=key)
-    invite = Invite(
-            id=id,
-            room=room,
-            )
-
-    return invite
-
-def remove_invite(message: Message):
-    query("""
-    delete from invite
-    where message = ?
-    """, [message.id])
+#def remove_invite(message: Message):
+#    query("""
+#    delete from invite
+#    where message = ?
+#    """, [message.id])
 
 
 

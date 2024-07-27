@@ -50,21 +50,21 @@ create table if not exists message (
 );
 
 -- decrypted invite messages
-create table if not exists invite (
-	id integer primary key autoincrement,
-
-	-- an invite is contained in a message
-	message integer,
-
-	room_name text,
-	--room_server integer,
-	room_server text,
-	room_auth text,
-	room_key text,
-
-	foreign key (message) references message (id) on delete cascade
-	--foreign key (room_server) references server (id)
-);
+--create table if not exists invite (
+--	id integer primary key autoincrement,
+--
+--	-- an invite is contained in a message
+--	message integer,
+--
+--	room_name text,
+--	--room_server integer,
+--	room_server text,
+--	room_auth text,
+--	room_key text,
+--
+--	foreign key (message) references message (id) on delete cascade
+--	--foreign key (room_server) references server (id)
+--);
 
 create table if not exists broadcast (
 	id integer primary key autoincrement,

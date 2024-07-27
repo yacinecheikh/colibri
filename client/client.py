@@ -66,7 +66,7 @@ sub = subparsers.add_parser("remove-remote-messages")  # remote
 sub.add_argument("address")
 sub.add_argument("messages", nargs="+")  # TODO test
 
-sub = subparsers.add_parser("list-invites")
+#sub = subparsers.add_parser("list-invites")
 
 sub = subparsers.add_parser("list-rooms")
 sub = subparsers.add_parser("new-room")
@@ -102,14 +102,14 @@ sub.add_argument("address")
 sub = subparsers.add_parser("read-address")  # server interaction
 sub.add_argument("address")
 
-sub = subparsers.add_parser("open-invite")
-sub.add_argument("address")
-sub.add_argument("message")
+#sub = subparsers.add_parser("open-invite")
+#sub.add_argument("address")
+#sub.add_argument("message")
 
 # send an invite message
-sub = subparsers.add_parser("send-invite")
-sub.add_argument("address", help="sent to address")
-sub.add_argument("room", help="invite to room")
+#sub = subparsers.add_parser("send-invite")
+#sub.add_argument("address", help="sent to address")
+#sub.add_argument("room", help="invite to room")
 
 # send a text message
 sub = subparsers.add_parser("send-message") # the message is piped to stdin
@@ -169,7 +169,7 @@ match args.command:
     case "list-foreign-addresses":
         addresses = db.list_addresses()
         for address in addresses:
-            print(address)
+            #print(address)
             if address.auth is None:
                 print(address)
     case "new-address":
@@ -267,11 +267,11 @@ match args.command:
         net.delete_messages(address, args.messages)
 
 
-    case "list-invites":
-        invites = db.list_invites()
-        for invite in invites:
-            # TODO: print message@address@server and room@server
-            print(invite)
+    #case "list-invites":
+    #    invites = db.list_invites()
+    #    for invite in invites:
+    #        # TODO: print message@address@server and room@server
+    #        print(invite)
     # invites are removed along with their containing message
 
 
@@ -366,12 +366,14 @@ match args.command:
             print(f.read())
     case "add-foreign-address":
         address = input()
-        name, server = address.split("@")
-        server = Server(url=server, trusted=False)
-        # TODO: test, should use Server.__eq__()
+        name, server_url = address.split("@")
+        server = db.get_server(server_url)
+        if server is None:
+            print("adding server", file=sys.stderr)
+            db.add_server(Server(url=server_url, trusted=False))
+            server = db.get_server(server_url)
         # TODO: check other usages of "if server not in db.list_servers()"
-        if server not in db.list_servers():
-            db.add_server(server)
+
         public_key = sys.stdin.read()
         key_name = system.save_key(public_key)
         address = Address(
@@ -380,7 +382,9 @@ match args.command:
                 auth=None,
                 key=key_name
                 )
+        #print(address)
         db.add_address(address)
+        #print("get:", db.get_address(str(address)))
         print("ok")
 
     # TODO: all of this has to be sorted
@@ -423,27 +427,26 @@ match args.command:
             #print(room)
 
     # invite messages
-    case "open-invite":
-        # TODO: rewrite (address + message name) to message url (message@address@server)
-        address = db.get_address(args.address)
-        message = db.get_message(address, args.message)
-        invite = db.get_invite(message)
-        db.add_room(invite.room)
+    #case "open-invite":
+    #    # TODO: rewrite (address + message name) to message url (message@address@server)
+    #    address = db.get_address(args.address)
+    #    message = db.get_message(address, args.message)
+    #    invite = db.get_invite(message)
+    #    db.add_room(invite.room)
 
-    case "send-invite":
-        address = db.get_address(args.address)
-        room = db.get_room(args.room)
-        # TODO: encrypt(json({type: invite, invite: {}}))
-        invite = messaging.create_invite(room)
-        print(invite)
-        sent = messaging.address(address, invite)
-        net.send_message(address, sent)
+    #case "send-invite":
+    #    address = db.get_address(args.address)
+    #    room = db.get_room(args.room)
+    #    message = messaging.create_invite(room)
+    #    encrypted = messaging.for_address(address, message)
+    #    print(net.send_message(address, encrypted))
 
     case "send-message":
         address = db.get_address(args.address)
         data = sys.stdin.read()
-        raise NotImplementedError
-        # TODO
+        message = messaging.create_message(data)
+        encrypted = messaging.for_address(address, message)
+        print(net.send_message(address, encrypted))
 
     # view signed broadcast content
     case "read-broadcast":
