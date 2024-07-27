@@ -84,10 +84,7 @@ def get_store(uuid: str, req: Auth):
 
 @app.post('/room/{uuid}')
 def set_store(uuid: str, req: RoomWrite):
-    h = sha256()
-    h.update(req.data.encode())
-    h = h.hexdigest()
-    return db.set_store(uuid, req.auth, req.data, b64decode(req.last_hash))
+    return db.set_store(uuid, req.auth, req.data, req.last_hash)
 
 @app.post('/broadcast/register')
 def broadcast_register(req: Auth):

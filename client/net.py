@@ -31,8 +31,6 @@ def register_broadcast(server: Server, auth):
     return broadcast
 
 
-
-# TODO: test
 def read_room(room: Room):
     return get(f"{room.server.url}/room/{room.name}", {
         "auth": room.auth,
@@ -42,6 +40,7 @@ def write_room(room: Room, data):
     return post(f"{room.server.url}/room/{room.name}", {
         "auth": room.auth,
         "data": data,
+        "last_hash": room.last_hash,
     })
 
 

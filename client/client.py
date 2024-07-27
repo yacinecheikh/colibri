@@ -5,6 +5,7 @@ import argparse
 import os
 import sys
 import json
+from hashlib import sha256
 
 import net
 import system
@@ -168,6 +169,7 @@ match args.command:
     case "list-foreign-addresses":
         addresses = db.list_addresses()
         for address in addresses:
+            print(address)
             if address.auth is None:
                 print(address)
     case "new-address":
@@ -308,6 +310,10 @@ match args.command:
         else:
             db.remove_room(room)
 
+    case "import-room":
+        raise NotImplementedError
+    case "export-room":
+        raise NotImplementedError
     # TODO: import/export-room
 
 
@@ -340,7 +346,10 @@ match args.command:
         b = db.get_broadcast(args.broadcast)
         db.remove_broadcast(b)
 
-    # TODO: import/export-broadcast
+    case "import-broadcast":
+        raise NotImplementedError
+    case "export-broadcast":
+        raise NotImplementedError
 
     # TODO: sort all these operations
 
@@ -433,6 +442,7 @@ match args.command:
     case "send-message":
         address = db.get_address(args.address)
         data = sys.stdin.read()
+        raise NotImplementedError
         # TODO
 
     # view signed broadcast content
@@ -472,11 +482,36 @@ match args.command:
     # view chatroom contents
     case "read-room":
         room = db.get_room(args.room)
-        # TODO
+        encrypted = net.read_room(room)
+        #print(encrypted)
+        h = sha256()
+        h.update(encrypted.encode())
+        room.last_hash = h.hexdigest()
+        #print(type(room.last_hash))
+        db.update_room_hash(room)
+        #print(room.last_hash)
+        data = gpg.decrypt(room.key, encrypted)
+        print(data)
 
     # set chatroom contents
     case "write-room":
         room = db.get_room(args.room)
-        # TODO
+        if room is None:
+            print(f"error: could not find room {args.room}", file=sys.stderr)
+            sys.exit(1)
+        with open("/dev/stdin") as f:
+            data = f.read()
+        encrypted = gpg.encrypt(room.key, data)
+        #print("last known hash:", room.last_hash)
+        success = net.write_room(room, encrypted)
+        if success:
+            # update hash
+            h = sha256()
+            h.update(encrypted.encode())
+            room.last_hash = h.hexdigest()
+            db.update_room_hash(room)
+            print("ok")
+        else:
+            print("sync error, need to read updates first")
 
 

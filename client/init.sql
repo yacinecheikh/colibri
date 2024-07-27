@@ -31,6 +31,9 @@ create table if not exists room (
 	sym_key text,
 	--data_file text,
 
+	-- sync to prevent race conditions
+	last_hash text default '',
+
 	foreign key (server) references server (id)
 );
 

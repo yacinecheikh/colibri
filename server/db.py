@@ -162,7 +162,7 @@ def get_store(store_id, auth):
         return res[0]
 
 
-def set_store(store_id, auth, data, known_hash: bytes):
+def set_store(store_id, auth, data, known_hash: str):
     current_data = db.execute("""
     select data
     from store
@@ -171,7 +171,7 @@ def set_store(store_id, auth, data, known_hash: bytes):
     """, [store_id, auth]).fetchone()[0]
     current_hash = sha256()
     current_hash.update(current_data.encode())
-    current_hash = current_hash.digest()
+    current_hash = current_hash.hexdigest()
     if known_hash == current_hash:
         db.execute("""
         update store

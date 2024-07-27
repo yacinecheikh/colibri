@@ -49,7 +49,7 @@ class Room:
     server: Server
     auth: str
     key: str  # symetric key
-    #data_file: str
+    last_hash: Union[str, None] = None
     id: Id = None
 
     def __str__(self):

@@ -290,19 +290,21 @@ def list_rooms():
         room.name,
         server.url,
         room.auth,
-        room.sym_key
+        room.sym_key,
+        room.last_hash
     from room
     join server
     on room.server = server.id
     """)
     rooms = []
-    for (id, name, url, auth, key) in rows:
+    for (id, name, url, auth, key, last_hash) in rows:
         room = Room(
             id=id,
             name=name,
             server=get_server(url),
             auth=auth,
             key=key,
+            last_hash=last_hash,
         )
         rooms.append(room)
     return rooms
@@ -315,7 +317,8 @@ def get_room(url: str):
         room.name,
         server.url,
         room.auth,
-        room.sym_key
+        room.sym_key,
+        room.last_hash
     from room
     join server
     on room.server = server.id
@@ -324,13 +327,14 @@ def get_room(url: str):
     """, [name, server])
     if not result:
         return None
-    (id, name, url, auth, key) = result[0]
+    (id, name, url, auth, key, last_hash) = result[0]
     room = Room(
             id=id,
             name=name,
             server=get_server(url),
             auth=auth,
             key=key,
+            last_hash=last_hash,
         )
     return room
 
@@ -355,6 +359,14 @@ def remove_room(room: Room):
     delete from room
     where id = ?
     """, [room.id])
+
+
+def update_room_hash(room: Room):
+    query("""
+    update room
+    set last_hash = ?
+    where id = ?
+    """, [room.last_hash, room.id])
 
 
 
