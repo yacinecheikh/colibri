@@ -1,138 +1,146 @@
 # Protocol
 
-The protocol features:
-- Messages: messages sent to an Address, potentially in order to initiate a communication
-- Rooms: initiated communication channels between 2+ users. In a room, all the users share a common symetric key to edit the communication history. In pratice, this means any user can impersonate anyone in a chat room. This is a feature.
-- Broadcasts: similar to Rooms, except only one person can write and the other users can only read if they received access.
-- Nodes: storage servers to keep encrypted data, route communications to addresses and limit access to the owners. Nodes do not need to be trusted in order to communicate, but a rogue node could try to permanently save every message, chat room history version, and broadcasted content version. This can be tested against by spamming changes to chat rooms and broadcast channels, but it is also trivial to host one's own node.
+## For the user
 
-# TODO
+There are 3 ways to communicate with Colibri:
+- Rooms
+- Addresses
+- Broadcasts
 
-Update this documentation (especially the part about moving existing chat rooms, and the addition of broadcast channels), and use the proper terms (Communication -> chat room, storage server -> node,...)
+### Rooms
 
+Chatrooms are simply stored as an encrypted blob on a server. They are encrypted with a symetric key, shared by all the users.
 
+Uses:
+- Private messages between two peers
+- Servers for small communities
 
-### Interactions between users
+Unlike other messaging services, Colibri does not authenticate room users. Any user can impersonate other members, alter messages or even remove the entire chat history. This means Colibri alone does not make it possible to prove that your messages were written by you.
 
-Users can:
-- Establish a communication
-- Move an existing communication somewhere else
-- Modify the state of the communication
-
-
-###### Establishing communications
-
-- User A wants to communicate with user B
-- A knows the public key of B and their messaging address
-- A generates an address to store a conversation on a server
-- A encrypts a message for B, containing a symetric key and the address previously generated
-- B reads the message, and can now edit the conversation on the new address
-
-###### Moving communications
-
-- User A wants to move the current conversation to an other place, and renew the keys
-- A generates a new asymetric key pair, and sends their public key on the existing conversation
-- B reads the invitation to "move out", and can generate an address
-- B sends the new conversation details to A
-    - Note: this system is not compatible with more than 2 users (since A is the only one who can read the new address)
-
-
-###### Modifying the state of communications
-
-The users synchronize by downloading and uploading the entire encrypted conversation.
-This process is ineffficient, but should not be a problem for text conversations (larger medias could be sent through other, temporary channels for example).
-
-To prevent race conditions, the POST requests must embed a hash of the stored (encrypted) conversation to prevent erasing modifications made by other people.
-    - This part is not implemented in the server API yet
-
-
-
-### Interactions with a storage server
-
-Users can:
-- Create a random address to receive messages
-- Create a random address to store a conversation
-- Secure their addresses against spam with (auto-generated) authentication tokens
-
-### Storage servers
-
-Ideally, a node would not leak the encrypted packages and would hide the existence of addresses from the unauthenticated.
-However, since a third party server cannot be trusted to keep its users' privacy, this may not be the case. In the worst case, a large organization with a high processing power could be trying to download every encrypted communication in the hope of decrypting it later.
-For this reason, users should try to host their own nodes as much as possible.
-
-
-Note on the API:
-Every request, including GET requests, use a JSON body as a query.
-Sending a body in GET may seem weird, but it is allowed and makes sense as long as the GET query is used to fetch data from the server and is not cached/bookmarked in a browser.
-Doing so allows me to streamline the API and only use JSON instead of encoding authentication tokens in the url.
-
-
-Message API:
+Example:
+```sh
+.venv/bin/python client.py new-room
 ```
-POST /address/register
-{
-    "auth": "<my auth token>"
-}
-Returns:
-"<address>"
 
-GET /address/{address}
-{
-    "auth": "<my auth token>"
-}
-Returns:
-[
-    {
-        "id": "<message id>",
-        "data": "<encrypted data>"
-    },
-    …
-]
 
-POST /address/{address}
-{
-    "data": "<encrypted data>"
-}
-Returns:
-"ok"
+### Addresses
 
-DELETE /address/{address}
+Addresses, like e-mail addresses, are a way for other people to send you messages. Each address has its own private key to decrypt received messages. The server will stores the encrypted messages until told otherwise by the owner of the address.
+
+Uses:
+- Receiving private messages
+- Receiving invites to rooms
+- Receiving contact information for broadcasts and other addresses
+
+Example:
+```sh
+.venv/bin/python client.py new-address
+```
+
+
+### Broadcasts
+
+Broadcasts are a way for Colibri users to share content one-sidedly, using authentication to prevent impersonation. Broadcasts work the same way as a personal blog: the owner can publish and edit their content, and the users can read the content knowing there is a single author.
+
+Uses:
+- Sharing resources
+
+Example:
+```sh
+.venv/bin/python client.py new-broadcast
+```
+
+### Servers
+
+Rooms, Addresses and Broadcasts are all stored on remote servers. Knowing at least one server is required before registering a new room/address/broadcast.
+
+Example:
+```sh
+.venv/bin/python client.py add-server "https://localhost:8000"
+.venv/bin/python client.py trust-server "https://localhost:8000"
+```
+
+Follow the setup instructions at [the server readme](./server/README.md) to setup a local Colibri server
+
+
+
+
+## For the auditor
+
+The protocol manages:
+- Servers
+- Rooms
+- Addresses
+- Broadcasts
+- Messages
+- Invites
+
+### Servers
+
+Servers are very simple, and do not manage any encryption. They just expose an HTTP API (this implementation uses FastAPI), and store everything locally.
+
+There is a simple authentication system to prevent a third party from reading an address or broadcasting, but this is just for spam prevention. Since the individual value of an auth token is weak (everything is encrypted or signed outside of the server), there is no currently no security over server authentication.
+
+A correct server (one that is not rogue) will minimize the amount of retained information about what is saved. The default Colibri server implementation will use random UUIDs (v4) as ids for rooms, addresses, messages and broadcasts, to prevent ordering the elements in the database, does not log dates, and does not feature a way to list the registered entries in its storage.
+
+For more info about the server's API, setup a local instance (FastAPI provides an automatically generated documentation).
+
+Note: the API uses a non-standard practice (sending a JSON body in a GET request). This is done in order to simplify the API, and should not create any problem since both FastAPI and Requests support it. This has already been done before by ElasticSearch before.
+
+
+### Rooms
+
+Rooms are stored as a simple encrypted variable. To the server, each room is a blob with no metadata like the number of messages.
+The Room users synchronize by only writing on the server if the hash of the current state of the room is known.
+
+The value stored in this black box is a JSON message that looks like this:
+```json
 {
-    "auth": "<my auth token>",
-    "remove": [
-        "<message id>",
-        …
+    "members": [
+        "a": {
+            "public-key": "BEGIN PGP PUBLIC KEY …\n"
+        }
+    ],
+
+    "messages": [
+        {
+            "author": "a",
+            "type": "text",
+            "text": "# Hello"
+        }
     ]
 }
-Returns:
-[
-    "ok",
-    …
-]
 ```
 
-Communication storing API:
-```
-POST /store/register
-{
-    "auth": "<my store auth token>"
-}
-Returns:
-"<address>"
+Note that this example does not follow the exact structure used in Colibri.
 
-GET /store/{store}
-{
-    "auth": "<my store auth token>"
-}
-Returns:
-"<data>"
+At the time of writing, this JSON formatting is not implemented in this repository because the user-level features are not part of the encryption protocol. From the Colibri CLI client, a Room is just a store for a single encrypted text.
 
-POST /store/{store}
+To give someone access to a Room, it is recommanded to send an Invite to their Address (since the Room access information will be encrypted) to prevent leaking the Room encryption key.
+
+
+### Addresses
+
+Addresses are encoded as Message lists on the Colibri server.
+Each Message is a JSON message encrypted with the public key on the address.
+
+Messages can contain human readable text, or other types of messages specific to Colibri, like a Room access details (Invite).
+
+Messages are only deleted by the server when told to do so by the client.
+
+
+### Broadcasts
+
+Like Rooms, broadcasts are encoded as an encrypted store to control access. However, in addition to the symetric key, an asymetric key is used by the owner to sign their content.
+
+
+The value stored in the encrypted storage is a JSON message of this type:
+```json
 {
-    "auth": "<my store auth token>",
-    "data": "<data>"
+    "data": "hi",
+    "signature": "BEGIN PGP …\n"
 }
-Returns:
-"ok"
 ```
+
+To prevent other people from overwriting on someone else's broadcast, the server uses authentication to restrict write access. However, it is the role of the client to verify signatures.
 
