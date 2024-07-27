@@ -6,9 +6,9 @@ create_profile("receiver")
 
 room = run("sender", "new-room")[:-1]
 addr = run("receiver", "new-address")[:-1]
-exported = run("receiver", f"export-address {addr}")
-run("sender", "import-address", exported)
+exported = run("receiver", f"show-address {addr}")
+run("sender", "add-foreign-address", exported)
 run("sender", f"send-invite {addr} {room}")
-run("receiver", f"read-address {addr}")
-run("sender", "describe")
-run("receiver", "describe")
+#run("receiver", f"read-address {addr}")
+#run("sender", "describe")
+#run("receiver", "describe")
