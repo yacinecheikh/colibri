@@ -4,11 +4,11 @@ A protocol for encrypted and untraceable communications.
 
 ## Status
 
-Colibri consists of 3 parts:
-- The server: the server simply stores encrypted blobs and creates locally unique ids to address these packages. The server has the main features done and tested.
-- The CLI client: this script contains all the commands to interact with the server and with other users securely. However, the CLI client is not intended for the end user. Its purpose is to be used as a backend by other programs, such as a GUI or a mobile app. The CLI client should be over soon (in a matter of days)
+Colibri consists of 4 parts:
+- The server: the server simply stores encrypted blobs and creates locally unique ids to address these packages. The server has all its features done and tested.
+- The CLI client: this script contains all the commands to interact with the server and with other users securely. However, the CLI client is not intended for the end user. Its purpose is to be used as a backend by other programs, such as a GUI or a mobile app. The CLI client is functional, though some (non-critical) features are still missing.
 - The GUI frontend: this part is not in the repository yet. This is the part that the end user is most interested in, but the CLI client must have a functional API before the GUI can use it.
-- The protocol: the protocol needs to be documented in order to verify that the program is correct and secure. The documentation must be centralized and kept up to date.
+- The protocol: the protocol needs to be documented in order to verify that the program is correct and secure. The documentation can be found [here](./PROTOCOL.md)
 
 
 ## Motivations (why yet another secure messaging system)
