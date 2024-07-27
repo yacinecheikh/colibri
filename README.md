@@ -13,7 +13,7 @@ Colibri consists of 3 parts:
 
 ## Motivations (why yet another secure messaging system)
 
-There are already many secure messaging systems, like Signal or Matrix, which make a very good job of securing the message content itself.
+There are already many secure messaging systems, like Signal or Matrix, which make a very good job of securing the message content itself, but they did not satisfy me completely, and I always felt drawn back to good old [manual GPG with my own preferences](https://github.com/yacinecheikh/sgpg).
 
 Colibri was made with these goals in mind:
 - Being simple enough for anyone to audit and host at home over Tor or I2P
