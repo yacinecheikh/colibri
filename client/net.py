@@ -3,6 +3,7 @@ from datatypes import Room, Address, Server, Message, Broadcast
 
 from typing import List
 
+# TODO: add error checking (at least display the server errors)
 
 def post(endpoint, data):
     return requests.post(endpoint, json=data).json()
@@ -62,7 +63,9 @@ def read_messages(address: Address):
     for entry in data:
         messages.append(Message(
             name = entry["id"],
+            address = address,
             data = entry["data"],
+            remote = True,
             ))
     return messages
 
@@ -74,6 +77,6 @@ def send_message(address: Address, data):
 def delete_messages(address: Address, message_names: List[str]):
     return delete(f"{address.server.url}/address/{address.name}", {
         "auth": address.auth,
-        "messages": message_names,
+        "message_ids": message_names,
     })
 

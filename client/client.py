@@ -57,7 +57,7 @@ sub = subparsers.add_parser("list-messages")
 sub.add_argument("address")
 sub = subparsers.add_parser("list-remote-messages")  # local db lookup
 sub.add_argument("address")
-sub = subparsers.add_parser("update-messages")  # fetch remote messages
+sub = subparsers.add_parser("fetch-messages")  # fetch remote messages
 sub.add_argument("address")
 sub = subparsers.add_parser("remove-message")  # local
 sub.add_argument("address")
@@ -65,6 +65,9 @@ sub.add_argument("message")
 sub = subparsers.add_parser("remove-remote-messages")  # remote
 sub.add_argument("address")
 sub.add_argument("messages", nargs="+")  # TODO test
+sub = subparsers.add_parser("read-message")
+sub.add_argument("message")
+
 
 #sub = subparsers.add_parser("list-invites")
 
@@ -99,8 +102,8 @@ sub.add_argument("address")
 
 
 # fetch new messages
-sub = subparsers.add_parser("read-address")  # server interaction
-sub.add_argument("address")
+#sub = subparsers.add_parser("read-address")  # server interaction
+#sub.add_argument("address")
 
 #sub = subparsers.add_parser("open-invite")
 #sub.add_argument("address")
@@ -153,7 +156,11 @@ match args.command:
         server = Server(url=args.host)
         db.add_server(server)
     case "trust-server":
-        db.trust_server(db.get_server(args.host))
+        server = db.get_server(args.host)
+        if server is None:
+            print(f"error: unknown server {args.host}", file=sys.stderr)
+            sys.exit(1)
+        db.trust_server(server)
     case "untrust-server":
         db.untrust_server(db.get_server(args.host))
     case "remove-server":
@@ -250,7 +257,7 @@ match args.command:
         messages = db.list_remote_messages(address)
         for message in messages:
             print(message)
-    case "update-messages":
+    case "fetch-messages":
         address = db.get_address(args.address)
         remote_messages = net.read_messages(address)
         # existing messages will not be duplicated/replaced
@@ -262,9 +269,29 @@ match args.command:
         message = db.get_message(address, args.message)
         db.remove_message(message)
     case "remove-remote-messages":
+        # TODO: use message url instead of address + message name
         address = db.get_address(args.address)
-        # TODO: add validation
-        net.delete_messages(address, args.messages)
+        messages = []
+        for name in args.messages:
+            message = db.get_message(address, name)
+            if message is None:
+                print(f"error: could not find message {name}", file=sys.stderr)
+                sys.exit(1)
+            messages.append(message)
+        names = [m.name for m in messages]
+        net.delete_messages(address, names)
+        for m in messages:
+            db.remove_remote_message(m)
+
+    case "read-message":
+        # TODO: use db.get_message(args.message)
+        message_name, address_name, server_url = args.message.split("@")
+        address = db.get_address(f"{address_name}@{server_url}")
+        message = db.get_message(address, message_name)
+        payload = messaging.from_address(address, message.data)
+        print("type:", payload["type"])
+        if payload["type"] == "text":
+            print(payload["text"])
 
 
     #case "list-invites":
@@ -342,6 +369,7 @@ match args.command:
                 access_key = access_key,
                 )
         db.add_broadcast(b)
+        print(b)
     case "remove-broadcast":
         b = db.get_broadcast(args.broadcast)
         db.remove_broadcast(b)
@@ -390,41 +418,39 @@ match args.command:
     # TODO: all of this has to be sorted
 
     # fetch updates
-    case "read-address":
-        # <id>@<server>
-        url = args.address
-        address = db.get_address(url)
-        messages = net.read_messages(address)
-        #print(messages)
-        for message in messages:
-            message = Message(
-                    message["id"],
-                    address,
-                    message["data"]
-                    )
-            #print(message)
-            if db.get_message(address, message.name):
-                # the message was already downloaded -> skip
-                continue
-            decoded = gpg.receive(message)
-            content = json.loads(decoded)
-            # TODO: split depending on message type
-            print(content)
+    #case "read-address":
+    #    address = db.get_address(args.address)
+    #    messages = net.read_messages(address)
+    #    #print(messages)
+    #    for message in messages:
+    #        message = Message(
+    #                name = message["id"],
+    #                address = address,
+    #                data = message["data"]
+    #                )
+    #        #print(message)
+    #        if db.get_message(address, message.name):
+    #            # the message was already downloaded -> skip
+    #            continue
+    #        decoded = gpg.receive(message)
+    #        content = json.loads(decoded)
+    #        # TODO: split depending on message type
+    #        print(content)
 
-            #db.add_message(message)
+    #        #db.add_message(message)
 
-            #invite = messaging.decode_invite(message, address)
-            #name, server = invite["room"].split("@")
-            #room_file = system.create_room()
-            #room = Room(
-            #        name,
-            #        server,
-            #        invite["auth"],
-            #        invite["key"],
-            #        room_file,
-            #        )
-            #db.add_room(room)
-            #print(room)
+    #        #invite = messaging.decode_invite(message, address)
+    #        #name, server = invite["room"].split("@")
+    #        #room_file = system.create_room()
+    #        #room = Room(
+    #        #        name,
+    #        #        server,
+    #        #        invite["auth"],
+    #        #        invite["key"],
+    #        #        room_file,
+    #        #        )
+    #        #db.add_room(room)
+    #        #print(room)
 
     # invite messages
     #case "open-invite":
@@ -461,6 +487,7 @@ match args.command:
         if not correct_signature:
             print("ERROR: incorrect signature. This broadcasted content may be corrupt, or insecure")
             sys.exit()
+        print(payload["data"])
 
         # TODO: save read content in the database, with the last fetch date
         # (create a broadcast_content table and a room_content table)

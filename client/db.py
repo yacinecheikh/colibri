@@ -200,22 +200,37 @@ def add_message(message: Message):
         return existing[0][0]
 
     inserted = query("""
-    insert into message (address, name, data)
-    values (?, ?, ?)
+    insert into message (address, name, data, remote_copy)
+    values (?, ?, ?, ?)
     returning id
-    """, [address_id, message.name, message.data])
+    """, [address_id, message.name, message.data, message.remote])
     return inserted[0][0]
 
 def get_message(address: Address, message_name):
-    id, data, remote = query("""
+    rows = query("""
     select id, data, remote_copy from message
     where address = ? and name = ?
     """, [address.id, message_name])
-    return Message(id=id, name=message_name, data=data, address=address)
+    if rows:
+        id, data, remote = rows[0]
+        return Message(
+                id=id,
+                name=message_name,
+                data=data,
+                address=address,
+                remote=remote
+                )
 
 def remove_message(message: Message):
     query("""
     delete from message
+    where id = ?
+    """, [message.id])
+
+def remove_remote_message(message: Message):
+    query("""
+    update message
+    set remote_copy = false
     where id = ?
     """, [message.id])
 

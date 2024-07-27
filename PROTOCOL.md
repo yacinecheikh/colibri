@@ -73,7 +73,7 @@ The protocol manages:
 - Addresses
 - Broadcasts
 - Messages
-- Invites
+[//]: #(Invites)
 
 ### Servers
 
@@ -124,7 +124,7 @@ To give someone access to a Room, it is recommanded to send an Invite to their A
 Addresses are encoded as Message lists on the Colibri server.
 Each Message is a JSON message encrypted with the public key on the address.
 
-Messages can contain human readable text, or other types of messages specific to Colibri, like a Room access details (Invite).
+Messages can contain human readable text, or other types of messages specific to Colibri, like a Room access details (Invite). These types of messages are not specified yet.
 
 Messages are only deleted by the server when told to do so by the client.
 

@@ -36,10 +36,10 @@ def verify(key, message, signature):
     return return_code == 0
 
 def send(key, message):
-    return syscall(f"./sgpg/encrypt {system.public_key_file(key)}", message)[1]
+    return syscall(f"./sgpg/encrypt {system.public_key(key)}", message)[1]
 
 def receive(key, encrypted):
-    return syscall(f"./sgpg/decrypt {system.private_key_file(key)}", encrypted)[1]
+    return syscall(f"./sgpg/decrypt {system.private_key(key)}", encrypted)[1]
 
 # WARNING
 # these commands are not secure against spying from other processes

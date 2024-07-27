@@ -66,6 +66,7 @@ class Message:
     # the full Address has to be known in order to decode messages
     address: Address
     data: str
+    remote: bool  # remote copy
     id: Id = None
 
     def __repr__(self):

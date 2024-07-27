@@ -68,7 +68,7 @@ def send_message(uuid: str, req: Data):
 
 @app.delete('/address/{uuid}')
 def remove_messages(uuid: str, req: MessageDelete):
-    for message in req.ids:
+    for message in req.message_ids:
         db.remove_message(uuid, message, req.auth)
     # TODO: status ?
     return 'ok'

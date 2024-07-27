@@ -4,7 +4,7 @@ message processing
 import json
 
 import db
-from datatypes import Address
+from datatypes import Address, Room, Broadcast
 import gpg
 
 
@@ -12,7 +12,9 @@ def for_address(address: Address, message: dict):
     return gpg.send(address.key, json.dumps(message))
 
 def from_address(address: Address, data: str):
-    return json.loads(gpg.receive(address.key, message))
+    decrypted = gpg.receive(address.key, data)
+    payload = json.loads(decrypted)
+    return payload
 
 def for_broadcast(broadcast: Broadcast, data: str):
     signature = gpg.sign(broadcast.auth_key, data)
@@ -30,10 +32,10 @@ def from_broadcast(broadcast: Broadcast, data: str):
     return (signature_correct, received["data"])
 
 def for_room(room: Room, data: str):
-    pass
+    return gpg.encrypt(room.key, data)
 
 def from_room(room: Room, data: str):
-    pass
+    return gpg.decrypt(room.key, data)
 
 def create_room_invite(room: Room):
     return json.dumps({
@@ -44,12 +46,13 @@ def create_room_invite(room: Room):
     })
 
 def create_message(text, sign_key=None):
-    # TODO: optionally sign with broadcast auth_key or address key
-    return json.dumps({
+    # TODO: optionally sign messages with broadcast auth_key or address key
+    # TODO: reuse json messages in the room edition UI
+    return {
         "type": "text",
-        "text": data,
+        "text": text,
         #"signature": None,
-    })
+    }
 
 def open_message(data: str):
     message = json.loads(data)

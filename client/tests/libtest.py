@@ -46,7 +46,7 @@ def create_profile(name):
     os.mkdir(name)
     os.mkdir(f"{name}/data")
     os.mkdir(f"{name}/data/keys")
-    os.mkdir(f"{name}/data/rooms")
+    os.mkdir(f"{name}/data/signatures")
     files = [
         "net.py",
         "system.py",
