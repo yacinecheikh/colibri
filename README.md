@@ -11,15 +11,17 @@ Colibri consists of 3 parts:
 - The protocol: the protocol needs to be documented in order to verify that the program is correct and secure. The documentation must be centralized and kept up to date.
 
 
-## Motivations (why yet another secure messaging system ?)
+## Motivations (why yet another secure messaging system)
 
-There are already existing secure messaging systems, like Signal or Matrix, which make a very good job of securing the message content itself.
+There are already many secure messaging systems, like Signal or Matrix, which make a very good job of securing the message content itself.
 
-The main complaints I (still) have with these options are:
-- code size: I have yet to find a single messaging system I can audit by myself. This project is supposed to stay small, by reusing the existing and trusted tools like GPG.
-- contact obfuscation: generating new accounts for each conversation should not just be normal, it should be encouraged or even automated. Requiring a phone number to register is clearly against the concept of privacy.
-- plausible deniability: the idea of using a shared symetric for conversations is underused. I think letting security part of the way the end user uses the app will lead to a funny experience for the user, and make security more natural for the end user.
-- Signal requires a phone number to register. At some point I thought about automating GPG and pastebin to send encrypted messages without authenticating and from Tor, and that's probably how Colibri came to be.
+Colibri was made with these goals in mind:
+- Being simple enough for anyone to audit and host at home over Tor or I2P
+- Third parties should not be able to know who wrote to whom
+- Colibri should be useable anonymously from Tor or I2P
+- Security should lead the design over convenience. In particular, plausible deniability in private exchanges can be made into a funny feature by simply giving the users the freedom to impersonate themselves.
+- Bots should not be discriminated against
+- Requiring a phone number to register is blasphemy
 
 
 ## Protocol
