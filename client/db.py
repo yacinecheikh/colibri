@@ -48,12 +48,14 @@ def list_trusted_servers():
 
 
 def get_server(url):
-    row = query("""
+    rows = query("""
     select id, url, trusted
     from server
     where url = ?
-    """, [url])[0]
-    (id, url, trusted) = row
+    """, [url])
+    if not rows:
+        return None
+    (id, url, trusted) = rows[0]
     return Server(id=id, url=url, trusted=trusted)
 
 
@@ -118,7 +120,7 @@ def list_addresses():
 # TODO: add bounds checks for getters ([0])
 def get_address(url):
     name, server = url.split('@')
-    (id, name, url, auth, key) = query("""
+    rows = query("""
     select
         address.id,
         address.name,
@@ -130,7 +132,11 @@ def get_address(url):
     on address.server = server.id
 
     where address.name = ? and server.url = ?
-    """, [name, server])[0]
+    """, [name, server])
+    if not rows:
+        return None
+
+    (id, name, url, auth, key) = rows[0]
     server = get_server(url)
     address = Address(id=id, name=name, server=server, auth=auth, key=key)
     return address

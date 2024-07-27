@@ -169,7 +169,11 @@ match args.command:
         auth = str(uuid())
         server_url = args.server
         if server_url is None:
-            server = choice(db.list_trusted_servers())
+            servers = db.list_trusted_servers()
+            if not servers:
+                print("error: no trusted server found")
+                sys.exit()
+            server = choice(servers)
         else:
             server = db.get_server(server_url)
         #print(f"generating address on server {server}")
@@ -232,7 +236,11 @@ match args.command:
         auth = str(uuid())
         server = args.server
         if server is None:
-            server = choice(db.list_trusted_servers())
+            servers = db.list_trusted_servers()
+            if not servers:
+                print("error: no trusted server found")
+                sys.exit()
+            server = choice(servers)
         else:
             server = db.get_server(server)
         #print(f"generating room on server {server}")
@@ -259,7 +267,11 @@ match args.command:
             print(b)
     case "new-broadcast":
         if args.server is None:
-            server = choice(db.list_trusted_servers())
+            servers = db.list_trusted_servers()
+            if not servers:
+                print("error: no trusted server found")
+                sys.exit()
+            server = choice(servers)
         else:
             server = db.get_server(args.server)
         auth = str(uuid())
@@ -311,7 +323,7 @@ match args.command:
         print("ok")
 
     # private key export
-    case "export-owned-address":
+    case "export-address":
         address = db.get_address(args.address)
         exported = {
             "name": address.name,
@@ -324,9 +336,32 @@ match args.command:
             exported["private_key"] = f.read()
 
         print(json.dumps(exported))
-    case "import-owned-address":
-        # TODO after checking export works
-        pass
+    case "import-address":
+        with open("/dev/stdin") as f:
+            imported = f.read()
+        imported = json.loads(imported)
+        address_url = f'{imported["name"]}@{imported["server"]}'
+        address = db.get_address(address_url)
+        if address is not None:
+            print(f"address {address} was already imported. skipping")
+            sys.exit()
+        server = db.get_server(imported["server"])
+        if server is None:
+            print("warning: importing address from unknown server {server}, adding {server} as trusted", file=sys.stderr)
+            server = Server(
+                    url=imported["server"],
+                    trusted=True
+                    )
+            db.add_server(server)
+        key = system.save_key(imported["public_key"], imported["private_key"])
+        address = Address(
+                name=imported["name"],
+                server=server,
+                auth=imported["auth"],
+                key=key,
+                )
+        db.add_address(address)
+        print("ok")
 
     # TODO: all of this has to be sorted
 
