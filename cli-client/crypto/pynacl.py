@@ -21,7 +21,7 @@ from nacl.exceptions import BadSignatureError
 
 import json
 
-from errors import BadSignature, BadSigningKey
+from errors import BadSignature
 
 
 # todo: find when to use the Box in the protocol ?
@@ -58,10 +58,19 @@ def encoded(thing):
 #def decoded(thing):
 #    raise NotImplementedError
 
-def encrypted(key, thing):
-    return key.encrypt(thing.encode(), encoder=HexEncoder).decode()
-def decrypted(key, thing):
-    return key.decrypt(thing.encode(), encoder=HexEncoder).decode()
+def encrypted(key, data):
+    return key.encrypt(data.encode(), encoder=HexEncoder).decode()
+def decrypted(key, data):
+    return key.decrypt(data.encode(), encoder=HexEncoder).decode()
+
+def signed(key, data):
+    return key.sign(data.encode(), encoder=HexEncoder).decode()
+
+def verified(key, signed_message):
+    try:
+        return key.verify(signed_message.encode(), encoder=HexEncoder).decode()
+    except BadSignatureError:
+        raise BadSignature
 
 
 # rooms use a single symetric key
@@ -104,57 +113,31 @@ class BroadcastKeys:
     def __init__(self, random_init=True):
         if random_init:
             self.sign_key = SigningKey.generate()
+            print("sign key length:", len(bytes(self.sign_key)))
             self.verify_key = self.sign_key.verify_key
+            print("verify key length:", len(bytes(self.verify_key)))
             self.access_key = SecretBox(random(SecretBox.KEY_SIZE))
 
     def publish(self, data):
         # sign + encrypt
         # optional: embed signing key ?
 
-        # split the message from its signature
-        # https://pynacl.readthedocs.io/en/latest/signing/
-        signed = self.sign_key.sign(data.encode(), encoder=HexEncoder)
-        signature = signed.signature.decode()
+        signed_message = signed(self.sign_key, data)
 
-        verify_key = self.verify_key.encode(encoder=HexEncoder).decode()
-        published = json.dumps({
-            "message": data,
-            "signature": versioned(signature),
-            "verify-key": versioned(verify_key),
-        })
-        return json.dumps(versioned(encrypted(self.access_key, published)))
+        enc = encrypted(self.access_key, signed_message)
+        return json.dumps(versioned(enc))
 
-    # return False if error (wrong signing key or invalid signature)
-    def view(self, data): # -> bool, str
+    def view(self, data):
         encrypted_package = json.loads(data)
+
         assert encrypted_package["format"] == "libsodium-hex"
         assert encrypted_package["version"] == "0.1.0"
 
-        enc = encrypted_package["data"]
-        dec = decrypted(self.access_key, enc)
-        published = json.loads(dec)
+        signed_message = decrypted(self.access_key, encrypted_package["data"])
 
-        verify_key = published["verify-key"]
-        message = published["message"]
-        signature = published["signature"]
-
-        # the signing key must be the same, or the message is corrupt
-        assert verify_key["format"] == "libsodium-hex"
-        assert verify_key["version"] == "0.1.0"
-        if verify_key["data"] != encoded(self.verify_key):
-            raise BadSigningKey
-
-        assert signature["format"] == "libsodium-hex"
-        assert signature["version"] == "0.1.0"
-        encoded_signature = signature["data"].encode()
-        # remove the hex encoding
-        decoded_signature = HexEncoder.decode(encoded_signature)
-        try:
-            self.verify_key.verify(message.encode(), decoded_signature)
-            return message
-        except BadSignatureError as e:
-            # return generic Colibri error
-            raise BadSignature
+        # will raise an exception if the signature is not correct
+        message = verified(self.verify_key, signed_message)
+        return message
 
 
     def to_json(self):
@@ -189,15 +172,33 @@ class BroadcastKeys:
 
         return self
 
-# mails: signature optional (perfect with Curve25519 ?), asymetric encryption
+# mails: asymetric encryption, with optional signatures (must be known beforehand)
 # each set of keys must be serializable, and shareable (export,...) with a type/version
 
 class AddressKeys:
-    key_version = 0.1
-    key_type = "libsodium"
-
     def __init__(self, random_init=True):
         if random_init:
             self.sign_key = SigningKey.generate()
             self.encrypt_key = PrivateKey.generate()
+
+
+    def send_to(self, data):
+        return versioned(encrypted(self.encrypt_key, data))
+
+    def receive(self, data):
+        pass
+
+    def send_from(self, data):
+        #return versioned(signed(
+        pass
+
+    def receive_from(self):
+        pass
+
+    def to_json(self):
+        pass
+
+    @staticmethod
+    def from_json(data):
+        self = AddressKeys(random_init=False)
 
