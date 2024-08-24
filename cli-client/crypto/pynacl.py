@@ -12,10 +12,10 @@ In order to be crypto library agnostic, Colibri uses a high level module level i
 
 
 #import nacl
-from nacl.public import PrivateKey, Box, SealedBox
+from nacl.public import PrivateKey, PublicKey, Box, SealedBox
 from nacl.secret import SecretBox
 from nacl.utils import random
-from nacl.signing import SigningKey
+from nacl.signing import SigningKey, VerifyKey
 from nacl.encoding import HexEncoder
 from nacl.exceptions import BadSignatureError
 
@@ -65,12 +65,16 @@ def decrypted(key, data):
 
 def signed(key, data):
     return key.sign(data.encode(), encoder=HexEncoder).decode()
-
 def verified(key, signed_message):
     try:
         return key.verify(signed_message.encode(), encoder=HexEncoder).decode()
     except BadSignatureError:
         raise BadSignature
+
+def sealed(public_key, data):
+    return SealedBox(public_key).encrypt(data.encode(), encoder=HexEncoder).decode()
+def unsealed(private_key, data):
+    return SealedBox(private_key).decrypt(data.encode(), encoder=HexEncoder).decode()
 
 
 # rooms use a single symetric key
@@ -179,26 +183,64 @@ class AddressKeys:
     def __init__(self, random_init=True):
         if random_init:
             self.sign_key = SigningKey.generate()
-            self.encrypt_key = PrivateKey.generate()
+            self.verify_key = self.sign_key.verify_key
+            self.decrypt_key = PrivateKey.generate()
+            self.encrypt_key = self.decrypt_key.public_key
 
 
-    def send_to(self, data):
-        return versioned(encrypted(self.encrypt_key, data))
+    # seal/send_to
+    def send(self, data):
+        return json.dumps(versioned(sealed(self.encrypt_key, data)))
 
+    # unseal/receive
     def receive(self, data):
-        pass
+        encrypted_package = json.loads(data)
+        assert encrypted_package["format"] == "libsodium-hex"
+        assert encrypted_package["version"] == "0.1.0"
 
-    def send_from(self, data):
-        #return versioned(signed(
-        pass
+        message = unsealed(self.decrypt_key, encrypted_package["data"])
+        return message
 
-    def receive_from(self):
-        pass
+    #def sign(self, data):
+    #    #return versioned(signed(
+    #    pass
+
+    #def verify(self):
+    #    pass
 
     def to_json(self):
-        pass
+        data = {}
+        if self.sign_key is not None:
+            data["sign-key"] = encoded(self.sign_key)
+        else:
+            data["verify-key"] = encoded(self.verify_key)
+
+        if self.decrypt_key is not None:
+            data["decrypt-key"] = encoded(self.decrypt_key)
+        else:
+            data["encrypt-key"] = encoded(self.encrypt_key)
+
+        return json.dumps(versioned(data))
 
     @staticmethod
     def from_json(data):
+        data = json.loads(data)
+        assert data["format"] == "libsodium-hex"
+        assert data["version"] == "0.1.0"
+        data = data["data"]
+
         self = AddressKeys(random_init=False)
+        if "sign-key" in data:
+            self.sign_key = SigningKey(data["sign-key"], encoder=HexEncoder)
+            self.verify_key = self.sign_key.verify_key
+        else:
+            self.verify_key = VerifyKey(data["verify-key"], encoder=HexEncoder)
+
+        if "decrypt-key" in data:
+            self.decrypt_key = PrivateKey(data["decrypt-key"], encoder=HexEncoder)
+            self.encrypt_key = self.decrypt_key.public_key
+        else:
+            self.encrypt_key = PublicKey(data["encrypt-key"], encoder=HexEncoder)
+
+        return self
 

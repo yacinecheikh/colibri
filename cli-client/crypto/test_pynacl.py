@@ -36,3 +36,20 @@ def test_broadcastkeys():
     assert bytes(parsed.access_key) == bytes(keys.access_key)
     assert type(serialized) == str
 
+def test_addresskeys():
+    sender = AddressKeys()
+    receiver = AddressKeys()
+
+    # encryption
+    sealed = receiver.send("test")
+    assert receiver.receive(sealed) == "test"
+
+    # serialization
+    serialized = receiver.to_json()
+    parsed = AddressKeys.from_json(serialized)
+    assert bytes(parsed.sign_key) == bytes(receiver.sign_key)
+    assert bytes(parsed.verify_key) == bytes(receiver.verify_key)
+    assert bytes(parsed.encrypt_key) == bytes(receiver.encrypt_key)
+    assert bytes(parsed.decrypt_key) == bytes(receiver.decrypt_key)
+
+
