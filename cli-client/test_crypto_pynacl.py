@@ -1,4 +1,4 @@
-from pynacl import RoomKeys, BroadcastKeys, AddressKeys
+from crypto.pynacl import RoomKeys, BroadcastKeys, AddressKeys
 import json
 
 

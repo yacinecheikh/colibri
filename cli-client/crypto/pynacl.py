@@ -21,7 +21,8 @@ from nacl.exceptions import BadSignatureError
 
 import json
 
-from errors import BadSignature
+from .base import AddressKeys, BroadcastKeys, RoomKeys
+from .errors import BadSignature
 
 
 # todo: find when to use the Box in the protocol ?
@@ -79,7 +80,7 @@ def unsealed(private_key, data):
 
 # rooms use a single symetric key
 # (rooms rely on empirical deniability through lack of authentication)
-class RoomKeys:
+class RoomKeys(RoomKeys):
     def __init__(self, random_init=True):
         if random_init:
             self.key = SecretBox(random(SecretBox.KEY_SIZE))
@@ -113,7 +114,7 @@ class RoomKeys:
 
 
 # broadcasts use a signing key to authenticate the author, and a symetric key to share read access
-class BroadcastKeys:
+class BroadcastKeys(BroadcastKeys):
     def __init__(self, random_init=True):
         if random_init:
             self.sign_key = SigningKey.generate()
@@ -179,7 +180,7 @@ class BroadcastKeys:
 # mails: asymetric encryption, with optional signatures (must be known beforehand)
 # each set of keys must be serializable, and shareable (export,...) with a type/version
 
-class AddressKeys:
+class AddressKeys(AddressKeys):
     def __init__(self, random_init=True):
         if random_init:
             self.sign_key = SigningKey.generate()
