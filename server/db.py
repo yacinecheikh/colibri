@@ -118,7 +118,8 @@ def remove_message(address, message_id, auth):
     # (cannot join with the address)
     db.execute("""
     delete from message
-    where id not in (
+    where id in (
+        -- check the address auth and return the message ids
         select id
         from message
         join address
