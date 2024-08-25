@@ -1,10 +1,13 @@
 import sqlite3
 
-from datatypes import Room, Address, Server, Message, Invite, Broadcast
-from crypto_modules import *
+from datatypes import (
+        Server, Room, Address, Broadcast, Message,
+        RoomInfo, AddressInfo, BroadcastInfo,
+        )
+from crypto_module import *
 
 
-db = sqlite3.connect("data/db.sqlite3")
+db = sqlite3.connect("data.sqlite3")
 
 # initialize table structures
 with open("init.sql") as f:
@@ -71,10 +74,10 @@ def add_server(server):
         return existing[0][0]
 
     inserted = query("""
-    insert into server (url)
-    values (?)
+    insert into server (url, trusted)
+    values (?, ?)
     returning id
-    """, [server.url])
+    """, [server.url, server.trusted])
     return inserted[0][0]
 
 
@@ -144,7 +147,7 @@ def get_address(url):
 
     (id, name, url, auth, keys) = rows[0]
     server = get_server(url)
-    keys = AddressKeys.from_json(address.keys)
+    keys = AddressKeys.from_json(keys)
     address = Address(id=id, name=name, server=server, auth=auth, keys=keys)
     return address
 
@@ -340,7 +343,7 @@ def list_broadcasts():
         broadcast.name,
         server.url,
         broadcast.auth,
-        broadcast.keys,
+        broadcast.keys
     from broadcast
     join server
     on broadcast.server = server.id

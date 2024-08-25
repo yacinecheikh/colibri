@@ -83,23 +83,23 @@ class Message:
 
 @dataclass
 class RoomInfo:
-    id: Id = None
     message: Message
     url: str
     auth: str
     keys: str
+    id: Id = None
 
 @dataclass
 class AddressInfo:
-    id: Id = None
     message: Message
     url: str
     keys: str
+    id: Id = None
 
 @dataclass
-class BroadcastInfo
-    id: Id = None
+class BroadcastInfo:
     message: Message
     url: str
     keys: str
+    id: Id = None
 
