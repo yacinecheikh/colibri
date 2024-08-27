@@ -35,19 +35,25 @@ def syscall(cmd, stdin=None):
     return p.returncode, out
 
 
+# allows failing
+#def run(profile, cmd, stdin=None):
+#    info(f"running: {profile}/client.py {cmd}")
+#    code, out = syscall(f"cd tests/{profile} && .venv/bin/python client.py {cmd}", stdin)
+#    debug("done")
+#    debug(f"return code: {code}")
+#    info(f"output:\n{out}")
+#    # the return code is not used by the colibri client
+#    return out
+
+
 def run(profile, cmd, stdin=None):
     info(f"running: {profile}/client.py {cmd}")
-    code, out = syscall(f"cd {profile} && .venv/bin/python client.py {cmd}", stdin)
-    debug("done")
-    debug(f"return code: {code}")
-    info(f"output:\n{out}")
-    # the return code is not used by the colibri client
+    code, out = syscall(f"cd tests/{profile} && .venv/bin/python client.py {cmd}", stdin)
+    assert code == 0  # unhandled Python exceptions (the return code is not used by the cli client)
+    debug("ok")
+    #debug(f"return code: {code}")
+    debug(f"output:\n{out}")
     return out
-
-
-def assert_run(profile, cmd, stdin=None):
-    out = run(profile, cmd, stdin)
-    assert out == 0
 
 
 def create_minimal_profile(name):

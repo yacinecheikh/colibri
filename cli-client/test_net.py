@@ -1,3 +1,5 @@
+import pytest
+
 from uuid import uuid4 as uuid
 from hashlib import sha256
 
@@ -6,6 +8,8 @@ import net
 
 serv = Server("http://localhost:8000")
 
+
+@pytest.mark.net
 def test_rooms():
     auth = str(uuid())
     name = net.register_room(serv, auth)
@@ -25,6 +29,8 @@ def test_rooms():
     assert net.write_room(room, "test") == True
     assert net.read_room(room) == "test"
 
+
+@pytest.mark.net
 def test_broadcasts():
     auth = str(uuid())
     name = net.register_broadcast(serv, auth)
@@ -41,6 +47,7 @@ def test_broadcasts():
     assert net.read_broadcast(broadcast) == "test"
 
 
+@pytest.mark.net
 def test_addresses():
     auth = str(uuid())
     name = net.register_address(serv, auth)
