@@ -81,6 +81,9 @@ class Message:
 # room/broadcast/address info are embedded in special message types
 # these objects are stored in messages
 
+# TODO: remove if these types are redondant with Room/Address/Broadcast
+# (they are only used in messaging.py because Room/Address/Broadcast do not have to be in the database)
+
 @dataclass
 class RoomInfo:
     message: Message

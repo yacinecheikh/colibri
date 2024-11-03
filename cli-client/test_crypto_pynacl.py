@@ -19,9 +19,6 @@ def test_roomkeys():
     # encrypted messages must be json-serializable
     assert json.loads(json.dumps(encrypted)) == encrypted
 
-    #print(encrypted)
-    #assert False
-
 
 def test_broadcastkeys():
     keys = BroadcastKeys()
@@ -35,6 +32,13 @@ def test_broadcastkeys():
     parsed = BroadcastKeys.from_json(serialized)
     assert bytes(parsed.access_key) == bytes(keys.access_key)
     assert type(serialized) == str
+
+    # export public keys
+    view_keys = keys.public()
+    assert view_keys.sign_key == None
+    assert bytes(view_keys.verify_key) == bytes(keys.verify_key)
+    assert bytes(view_keys.access_key) == bytes(keys.access_key)
+
 
 def test_addresskeys():
     sender = AddressKeys()
@@ -52,4 +56,10 @@ def test_addresskeys():
     assert bytes(parsed.encrypt_key) == bytes(receiver.encrypt_key)
     assert bytes(parsed.decrypt_key) == bytes(receiver.decrypt_key)
 
+    # export public keys
+    sender_public = sender.public()
+    assert sender_public.sign_key == None
+    assert sender_public.decrypt_key == None
+    assert bytes(sender_public.verify_key) == bytes(sender.verify_key)
+    assert bytes(sender_public.encrypt_key) == bytes(sender.encrypt_key)
 

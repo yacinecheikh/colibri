@@ -86,10 +86,13 @@ class RoomKeys(RoomKeys):
             self.key = SecretBox(random(SecretBox.KEY_SIZE))
 
 
-    def encrypt(self, data):
-        return versioned(encrypted(self.key, data))
+    def encrypt(self, data: str):
+        assert isinstance(data, str)
+        return json.dumps(versioned(encrypted(self.key, data)))
 
-    def decrypt(self, data):
+    def decrypt(self, data: str):
+        assert isinstance(data, str)
+        data = json.loads(data)
         assert data["format"] == "libsodium-hex"
         assert data["version"] == "0.1.0"
         return decrypted(self.key, data["data"])
@@ -118,12 +121,22 @@ class BroadcastKeys(BroadcastKeys):
     def __init__(self, random_init=True):
         if random_init:
             self.sign_key = SigningKey.generate()
-            print("sign key length:", len(bytes(self.sign_key)))
+            # 32
+            #print("sign key length:", len(bytes(self.sign_key)))
             self.verify_key = self.sign_key.verify_key
-            print("verify key length:", len(bytes(self.verify_key)))
+            # 32
+            #print("verify key length:", len(bytes(self.verify_key)))
             self.access_key = SecretBox(random(SecretBox.KEY_SIZE))
 
-    def publish(self, data):
+    def public(self):
+        new = BroadcastKeys(random_init=False)
+        new.sign_key = None
+        new.verify_key = self.verify_key
+        new.access_key = self.access_key
+        return new
+
+    def publish(self, data: str):
+        assert isinstance(data, str)
         # sign + encrypt
         # optional: embed signing key ?
 
@@ -132,7 +145,8 @@ class BroadcastKeys(BroadcastKeys):
         enc = encrypted(self.access_key, signed_message)
         return json.dumps(versioned(enc))
 
-    def view(self, data):
+    def view(self, data: str):
+        assert isinstance(data, str)
         encrypted_package = json.loads(data)
 
         assert encrypted_package["format"] == "libsodium-hex"
@@ -188,13 +202,22 @@ class AddressKeys(AddressKeys):
             self.decrypt_key = PrivateKey.generate()
             self.encrypt_key = self.decrypt_key.public_key
 
+    def public(self):
+        new = AddressKeys(random_init=False)
+        new.sign_key = None
+        new.verify_key = self.verify_key
+        new.decrypt_key = None
+        new.encrypt_key = self.encrypt_key
+        return new
 
     # seal/send_to
-    def send(self, data):
+    def send(self, data: str):
+        assert isinstance(data, str)
         return json.dumps(versioned(sealed(self.encrypt_key, data)))
 
     # unseal/receive
-    def receive(self, data):
+    def receive(self, data: str):
+        assert isinstance(data, str)
         encrypted_package = json.loads(data)
         assert encrypted_package["format"] == "libsodium-hex"
         assert encrypted_package["version"] == "0.1.0"
@@ -202,6 +225,7 @@ class AddressKeys(AddressKeys):
         message = unsealed(self.decrypt_key, encrypted_package["data"])
         return message
 
+    # TODO
     #def sign(self, data):
     #    #return versioned(signed(
     #    pass
@@ -235,12 +259,14 @@ class AddressKeys(AddressKeys):
             self.sign_key = SigningKey(data["sign-key"], encoder=HexEncoder)
             self.verify_key = self.sign_key.verify_key
         else:
+            self.sign_key = None
             self.verify_key = VerifyKey(data["verify-key"], encoder=HexEncoder)
 
         if "decrypt-key" in data:
             self.decrypt_key = PrivateKey(data["decrypt-key"], encoder=HexEncoder)
             self.encrypt_key = self.decrypt_key.public_key
         else:
+            self.decrypt_key = None
             self.encrypt_key = PublicKey(data["encrypt-key"], encoder=HexEncoder)
 
         return self

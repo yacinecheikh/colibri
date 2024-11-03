@@ -12,6 +12,17 @@ class RoomKeys:
     def decrypt(self, data):
         raise NotImplementedError
 
+    # export public keys, by returning a RoomKeys object without the private keys
+    # this method has no meaning for rooms (symetric encryption only)
+    def public(self):
+        # DO NOT implement this method (as it makes no sense)
+        raise NotImplementedError("This should not happen")
+
+    # return True if the private keys are stored in this instance
+    @property
+    def owned(self):
+        return True
+
     def to_json(self):
         raise NotImplementedError
 
@@ -37,6 +48,14 @@ class AddressKeys:
     def verify(self, data):
         pass
 
+    def public(self):
+        raise NotImplementedError
+
+    # return True if the private keys are stored in this instance
+    @property
+    def owned(self):
+        raise NotImplementedError
+
     def to_json(self):
         raise NotImplementedError
 
@@ -55,6 +74,14 @@ class BroadcastKeys:
 
     # decrypt+verify
     def view(self, data):
+        raise NotImplementedError
+
+    def public(self):
+        raise NotImplementedError
+
+    # return True if the private keys are stored in this instance
+    @property
+    def owned(self):
         raise NotImplementedError
 
     def to_json(self):

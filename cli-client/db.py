@@ -364,11 +364,15 @@ def list_broadcasts():
 def get_broadcast(url):
     name, server = url.split("@")
     server = get_server(server)
-    row = query("""
+    rows = query("""
     select id, name, auth, keys
     from broadcast
     where name = ? and server = ?
-    """, [name, server.id])[0]
+    """, [name, server.id])
+    if not rows:
+        return None
+
+    row = rows[0]
     id, name, auth, keys = row
     return Broadcast(
             id = id,

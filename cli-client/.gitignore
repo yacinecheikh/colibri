@@ -1,1 +1,4 @@
 tests.sqlite3
+data.sqlite3
+# test profiles
+tests/*/*

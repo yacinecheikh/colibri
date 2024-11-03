@@ -2,6 +2,12 @@
 
 ## Setup
 
+Clone the repository:
+```sh
+git clone https://github.com/yacinecheikh/colibri
+cd colibri/cli-client
+```
+
 Create a python virtual environment:
 ```sh
 python3 -m venv .venv
@@ -40,22 +46,19 @@ To run the CLI:
 .venv/bin/python client.py
 ```
 
-The `client.py` script contains all the required commands to communicate with servers and other clients (generating message addresses, editing a chat room,…).
+The `client.py` script contains all the required commands to communicate with servers and other clients (creating an address, sending messages,...).
 
-By itself, the CLI client is not supposed to be used manually (the CLI is too low level). Instead, you should use a frontend to edit chat rooms in markdown for example.
+The CLI client is not supposed to be used manually, and is too low level to be user friendly. But it is useable enough to get familiar with the Colibri protocol, and can be used as a backend by other desktop applications.
 
-The local cache is saved in the `data/` folder. Ideally, you should encrypt the entire software (in a LUKS-encrypted usb key for example) to prevent scanning or modification attempts by malicious programs.
+The local cache is saved in the `data.sqlite3` database. Ideally, this file (as well as colibri itself) should be encrypted at rest (on a LUKS-encrypted USB key for example) to prevent data leak.
 
 
 ## Remote/local storage
 
-Messages that are stored on the server are not automatically remove when downloaded (since a failure could lose the messages).
-Instead, messages have tags to identify them, and can be selected for removal locally (with the `remove-message` command) or remotely (`remove-remote-messages`)
+Messages that are stored on the server are not automatically removed when downloaded (since a network failure could lose the messages).
+Instead, messages have tags to identify them (`message-id@address-id@server`), and can be selected for removal locally (with the `remove-message` command) or remotely (`remove-remote-messages`)
 
-If a message is removed locally but kept on the server, it will be downloaded again during the next update. To delete a message definitely, remove the server (remote) message before the local one.
+If a message is removed locally but kept on the server, it will be downloaded again during the next update. To delete a message definitely, remove the remote message (stored on the server) before the local one.
 
-In order to obfuscate which messages are read on the server, the client downloads every message at each update. This can cause lag on slow connections. To solve this problem, just remove the remote messages with `remove-remote-messages`. Once a message is removed from the remote server, it will never be downloaded again.
-
-If an invite message is regenerated (by removing the local message before updating), the invite will also be regenerated if it had been removed. To avoid regenerating removed messages, remove them from the server.
-
+In order to obfuscate which messages are read on the server, the client downloads every message at each update. This can cause lag on slow connections. To solve this problem, empty the remote message cache with `remove-remote-messages`. Once a message is removed from the remote server, it can never be downloaded again.
 

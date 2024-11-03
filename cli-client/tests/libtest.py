@@ -8,7 +8,9 @@ ensures everything works as intended
 from subprocess import PIPE, Popen, STDOUT
 import os
 
-verbose = False
+
+verbose = True
+
 def debug(msg):
     if verbose:
         print(f"[DEBUG] {msg}")
@@ -49,10 +51,17 @@ def syscall(cmd, stdin=None):
 def run(profile, cmd, stdin=None):
     info(f"running: {profile}/client.py {cmd}")
     code, out = syscall(f"cd tests/{profile} && .venv/bin/python client.py {cmd}", stdin)
-    assert code == 0  # unhandled Python exceptions (the return code is not used by the cli client)
-    debug("ok")
+    if code == 0:
+        debug("ok")
+    else:
+        debug("error")
+    if out == "ok\n":
+        print()
+    else:
+        debug(f"output:\n{out}")
+    assert code == 0  # indicates an unhandled Python exceptions (the return code is never used by the cli client)
+    #debug("ok")
     #debug(f"return code: {code}")
-    debug(f"output:\n{out}")
     return out
 
 
