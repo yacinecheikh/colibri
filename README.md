@@ -51,15 +51,8 @@ The first URL can only be accessed through Tor (with Whonix for example), and th
 The second URL could be used to hide the existence of a Colibri instance with a dummy website and SSL encryption.
 
 What I mean with these examples is that Colibri has no requirement on its own, and tries to stay as small as possible.
-If you look at the current source code of the server, the entire codebase is about 326 lines.
+If you look at the current source code of the server, the entire codebase is about 326 lines (the client is larger because it has to manage encryption and CLI commands, but we are still under 3K).
 
-
-There are already many secure messaging systems, like Signal or Matrix. While they do keep the messages encrypted, there are many issues regarding anonymous communications:
-On Matrix, 
-
-Matrix, for instance, requires a domain name in order to host a server (which requires a credit card), and 
-
-There are already many secure messaging systems, like Signal or Matrix, which make a very good job of securing the message content itself, but they did not satisfy me completely, and I always felt drawn back to good old [manual GPG with my own preferences](https://github.com/yacinecheikh/sgpg).
 
 
 ### Why Colibri
