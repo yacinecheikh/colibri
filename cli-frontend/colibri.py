@@ -34,9 +34,13 @@ print(ctl.style(italic, underline, fg_bright(red)) + "test" + ctl.style(reset))
 # clear command
 #print(clear() + move(1, 1), end="")
 
+# initial terminal state (restored after running the program)
 term_state = ctl.get_terminal_state()
 term_size = ctl.get_size()
-print(term_size)
+
+
+# constants
+size = 24, 80
 
 
 def cleanup():
@@ -66,7 +70,7 @@ def init():
     ctl.no_echo()
     ctl.disable_line_buffering()
     ctl.set_nonblocking()
-    ctl.set_size(24, 80)
+    ctl.set_size(*size)
 
     ctl.clear()
     # flush manually because flushing is not done automatically without \n
@@ -74,9 +78,7 @@ def init():
     print("", end="", flush=True)
 
 
-print(ctl.get_size())
 ctl.on_cleanup(cleanup)
-# ctl.on_resize(resize)
 init()
 print(ctl.move(1, 1), end="")
 
