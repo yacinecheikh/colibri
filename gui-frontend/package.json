@@ -1,0 +1,15 @@
+{
+  "name": "gui-frontend",
+  "version": "0.1.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "SEE LICENSE IN LICENSE",
+  "description": "",
+  "devDependencies": {
+    "electron": "^33.2.0"
+  }
+}
