@@ -6,25 +6,34 @@ import atexit
 import signal
 
 
+# def color(text, color):
+#    return f'\033[{color}m{text}\033[0m'
+
+
+def do(ansi_code):
+    print(ansi_code, end="", flush=True)
+
+
 def style(*modifiers):
-    return '\033[{}m'.format(';'.join(map(str, modifiers)))
+    do('\033[{}m'.format(';'.join(map(str, modifiers))))
+    # return '\033[{}m'.format(';'.join(map(str, modifiers)))
 
 
-def color(text, color):
-    return f'\033[{color}m{text}\033[0m'
+# def write(text):
+#    print(text, end="", flush=True)
 
 
 # absolute move
 def move(x, y):
-    return f'\033[{y};{x}H'
+    do(f'\033[{y};{x}H')
 
 
 def move_x(x):
-    return f'\033[{x}G'
+    do(f'\033[{x}G')
 
 
 def move_y(y):
-    return f'\033[{y}d'
+    do(f'\033[{y}d')
 
 
 def get_size():
@@ -33,45 +42,46 @@ def get_size():
 
 
 def set_size(rows, cols):
-    print(f"\x1b[8;{rows};{cols}t", end="", flush=True)
+    do(f"\x1b[8;{rows};{cols}t")
 
 
 # clear screen
 def clear():
-    print('\033[2J', end="")
+    do('\033[2J')
 
 
 # clear line
 def clear_line():
-    return '\033[K'
+    do('\033[K')
 
 
 # cursor
 def hide_cursor():
-    print('\033[?25l', end="")
+    do('\033[?25l')
 
 
 def show_cursor():
-    print('\033[?25h', end="")
+    do('\033[?25h')
 
 
 # switch to alternate buffer
 def save_buffer():
-    print('\033[?1049h', end="")
+    do('\033[?1049h')
 
 
 # switch to normal buffer
 def restore_buffer():
     clear()
-    print('\033[?1049l', end="")
+    do('\033[?1049l')
 
 
+# not used
 def save_cursor():
-    return '\033[s'
+    do('\033[s')
 
 
 def restore_cursor():
-    return '\033[u'
+    do('\033[u')
 
 
 # termios state
@@ -103,8 +113,12 @@ def no_buffering():
 def disable_line_buffering():
     import tty
     tty.setcbreak(sys.stdin.fileno())
+    # tty.setcbreak(sys.stdout.fileno())
 
 
+# TODO: use PYTHONUNBUFFERED=1 instead
+# makes stdin non-blocking (buggy if stdout is blocking, will randomly raise BlockingIOError)
+"""
 # prevent stdin from buffering with fcntl
 # TODO: try to remove unneeded flags
 def set_nonblocking():
@@ -114,6 +128,13 @@ def set_nonblocking():
     # disable buffering ?
     flags = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
     fcntl.fcntl(sys.stdin, fcntl.F_SETFL, flags | os.O_NDELAY)
+
+    # does not solve the BlockingIOError problem
+    # flags = fcntl.fcntl(sys.stdout.fileno(), fcntl.F_GETFL)
+    # fcntl.fcntl(sys.stdout.fileno(), fcntl.F_SETFL, flags | os.O_NONBLOCK)
+    # flags = fcntl.fcntl(sys.stdout.fileno(), fcntl.F_GETFL)
+    # fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags | os.O_NDELAY)
+"""
 
 
 # read a key event from stdin

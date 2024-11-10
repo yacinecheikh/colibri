@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from ansi_lib.colors import (
     reset,
     fg_reset,
@@ -28,11 +29,24 @@ from ansi_lib.colors import (
     # bg_rgb,
 )
 from ansi_lib import ctl
+import dom
+import sys
 
 
-print(ctl.style(italic, underline, fg_bright(red)) + "test" + ctl.style(reset))
-# clear command
-#print(clear() + move(1, 1), end="")
+#sys.stdout.close()
+#sys.stdout = open("/dev/stdout", "bw", 0)
+
+builtin_print = print
+def my_print(*args, **kwargs):
+    try:
+        builtin_print(*args, **kwargs)
+    except BlockingIOError as e:
+        print(e)
+
+
+import builtins
+builtins.print = my_print
+
 
 # initial terminal state (restored after running the program)
 term_state = ctl.get_terminal_state()
@@ -44,7 +58,7 @@ size = 24, 80
 
 
 def cleanup():
-    print("cleanup")
+    # print("cleanup")
     ctl.restore_buffer()
     ctl.show_cursor()
     ctl.set_terminal_state(term_state)
@@ -69,36 +83,34 @@ def init():
     ctl.hide_cursor()
     ctl.no_echo()
     ctl.disable_line_buffering()
-    ctl.set_nonblocking()
+    # ctl.set_nonblocking()
     ctl.set_size(*size)
+    ctl.move(1, 1)
 
     ctl.clear()
     # flush manually because flushing is not done automatically without \n
     # TODO: add flush=True to every ctl command
-    print("", end="", flush=True)
+    #print("", end="", flush=True)
 
 
 ctl.on_cleanup(cleanup)
 init()
-print(ctl.move(1, 1), end="")
 
 
-# from datetime import datetime
+def main():
+    text = dom.Text(None, "Hello world!", color=cyan)
+    root = text
+    doc = dom.Document(root)
 
-
-# start = datetime.now()
-# loops = 0
-while True:
-    try:
+    while True:
+        doc.render()
         ch = ctl.getch()
         if ch == "q":
             break
-        elif ch == "g":
-            print(ctl.get_size())
-        elif ch:
-            print(repr(ch))
-        # loops += 1
-    except EOFError:
-        pass
-    except Exception as e:
-        print(e)
+
+
+try:
+    main()
+except Exception as e:
+    with open("error", "w") as f:
+        f.write(repr(e))
