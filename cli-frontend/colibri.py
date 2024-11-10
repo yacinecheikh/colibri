@@ -35,12 +35,8 @@ print(ctl.style(italic, underline, fg_bright(red)) + "test" + ctl.style(reset))
 #print(clear() + move(1, 1), end="")
 
 term_state = ctl.get_terminal_state()
-
-
-# TODO: control the terminal size if needed, instead of trying to fit impossible size requirements
-def resize(x, y):
-    pass
-    # print(x, y)
+term_size = ctl.get_size()
+print(term_size)
 
 
 def cleanup():
@@ -48,6 +44,7 @@ def cleanup():
     ctl.restore_buffer()
     ctl.show_cursor()
     ctl.set_terminal_state(term_state)
+    ctl.set_size(*term_size)
 
     """
     end = datetime.now()
@@ -56,12 +53,11 @@ def cleanup():
     framerate = loops / dt
     print(f"time: {dt}")
     print(f"framerate: {framerate}")
-
+    """
+    # do not use sys.exit()
+    # sys.exit() can report a SystemExit exception
     import os
     os._exit(0)
-    """
-    import sys
-    sys.exit(0)
 
 
 def init():
@@ -70,15 +66,17 @@ def init():
     ctl.no_echo()
     ctl.disable_line_buffering()
     ctl.set_nonblocking()
+    ctl.set_size(24, 80)
 
     ctl.clear()
     # flush manually because flushing is not done automatically without \n
     # TODO: add flush=True to every ctl command
-    print(end="", flush=True)
+    print("", end="", flush=True)
 
 
-ctl.on_resize(resize)
+print(ctl.get_size())
 ctl.on_cleanup(cleanup)
+# ctl.on_resize(resize)
 init()
 print(ctl.move(1, 1), end="")
 
@@ -93,6 +91,8 @@ while True:
         ch = ctl.getch()
         if ch == "q":
             break
+        elif ch == "g":
+            print(ctl.get_size())
         elif ch:
             print(repr(ch))
         # loops += 1

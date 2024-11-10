@@ -27,6 +27,15 @@ def move_y(y):
     return f'\033[{y}d'
 
 
+def get_size():
+    rows, cols = termios.tcgetwinsize(sys.stdout.fileno())
+    return rows, cols
+
+
+def set_size(rows, cols):
+    print(f"\x1b[8;{rows};{cols}t", end="", flush=True)
+
+
 # clear screen
 def clear():
     print('\033[2J', end="")
@@ -118,6 +127,13 @@ def on_resize(func):
         winsize = termios.tcgetwinsize(sys.stdout.fileno())
         func(*winsize)
     signal.signal(signal.SIGWINCH, callback)
+
+
+"""
+def resize(x, y):
+    print(x, y)
+on_resize(resize)
+"""
 
 
 def on_cleanup(cleanup):
