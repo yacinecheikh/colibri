@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env PYTHONUNBUFFURED=1 python3
 from ansi_lib.colors import (
     reset,
     fg_reset,
@@ -30,22 +30,18 @@ from ansi_lib.colors import (
 )
 from ansi_lib import ctl
 import dom
-import sys
+import view
 
 
-#sys.stdout.close()
-#sys.stdout = open("/dev/stdout", "bw", 0)
-
-builtin_print = print
-def my_print(*args, **kwargs):
-    try:
-        builtin_print(*args, **kwargs)
-    except BlockingIOError as e:
-        print(e)
-
-
-import builtins
-builtins.print = my_print
+# fail-safe print if PYTHONUNBUFFERED=1 is missing
+# builtin_print = print
+# def my_print(*args, **kwargs):
+#     try:
+#         builtin_print(*args, **kwargs)
+#     except BlockingIOError as e:
+#         print(e)
+# import builtins
+# builtins.print = my_print
 
 
 # initial terminal state (restored after running the program)
@@ -83,14 +79,11 @@ def init():
     ctl.hide_cursor()
     ctl.no_echo()
     ctl.disable_line_buffering()
-    # ctl.set_nonblocking()
+    ctl.set_nonblocking()
     ctl.set_size(*size)
     ctl.move(1, 1)
 
     ctl.clear()
-    # flush manually because flushing is not done automatically without \n
-    # TODO: add flush=True to every ctl command
-    #print("", end="", flush=True)
 
 
 ctl.on_cleanup(cleanup)
@@ -98,15 +91,25 @@ init()
 
 
 def main():
-    text = dom.Text(None, "Hello world!", color=cyan)
-    root = text
+    # text = dom.Text("Hello world!", color=cyan, highlighted=True)
+    # keyviewer = dom.Text("", color=cyan)
+    # keyviewer.buffer = ""
+    tabs = view.Tabs()
+    root = tabs
     doc = dom.Document(root)
 
     while True:
         doc.render()
         ch = ctl.getch()
-        if ch == "q":
+        if ch == "":
+            continue
+        elif ch == "q":
             break
+        else:
+            doc.emit_event(ch, None)
+        # else:
+            # keyviewer.buffer += ch
+            # keyviewer.text = repr(keyviewer.buffer)
 
 
 try:

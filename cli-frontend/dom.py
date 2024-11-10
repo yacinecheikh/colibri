@@ -34,8 +34,11 @@ class Document:
     def emit_event(self, event, event_data):
         if event in self.event_handlers:
             self.event_handlers[event].on_event(event, event_data)
+            return True
+        """
         else:
             raise Exception(f"Event {event} not handled")
+        """
 
     def render(self):
         self.root.render(1, 1)
@@ -43,7 +46,7 @@ class Document:
 
 # concrete Node classes
 class Text(Node):
-    def __init__(self, text, *styles, color=None, highlighted=False):
+    def __init__(self, text, *styles, color=colors.white, highlighted=False):
         self.text = text
         self.styles = styles
         # dynamic styling (ad-hoc requirement)
@@ -54,7 +57,9 @@ class Text(Node):
         ctl.move(x, y)
         ctl.style(colors.reset, *self.styles)
         if self.highlighted:
-            ctl.style(colors.fg_bright(self.colors))
+            ctl.style(colors.fg_bright(self.color))
+        else:
+            ctl.style(colors.fg(self.color))
         print(self.text)
 
 

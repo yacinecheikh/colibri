@@ -15,7 +15,9 @@ def do(ansi_code):
 
 
 def style(*modifiers):
-    do('\033[{}m'.format(';'.join(map(str, modifiers))))
+    for modifier in modifiers:
+        do('\033[{}m'.format(modifier))
+    # do('\033[{}m'.format(';'.join(map(str, modifiers))))
     # return '\033[{}m'.format(';'.join(map(str, modifiers)))
 
 
@@ -116,10 +118,8 @@ def disable_line_buffering():
     # tty.setcbreak(sys.stdout.fileno())
 
 
-# TODO: use PYTHONUNBUFFERED=1 instead
-# makes stdin non-blocking (buggy if stdout is blocking, will randomly raise BlockingIOError)
-"""
-# prevent stdin from buffering with fcntl
+# makes reading stdin asynchronous and non-blocking
+# will randomly raise BlockingIOError during print() calls if python is not called with PYTHONUNBUFFERED=1
 # TODO: try to remove unneeded flags
 def set_nonblocking():
     # allow reading without blocking (raise EOFError)
@@ -134,12 +134,18 @@ def set_nonblocking():
     # fcntl.fcntl(sys.stdout.fileno(), fcntl.F_SETFL, flags | os.O_NONBLOCK)
     # flags = fcntl.fcntl(sys.stdout.fileno(), fcntl.F_GETFL)
     # fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags | os.O_NDELAY)
-"""
 
 
 # read a key event from stdin
 def getch():
-    return sys.stdin.read(1)
+    # return sys.stdin.read(1)
+    # allow multi-character events ("\x1b[D" is left arrow, "\x1b[C" is right arrow)
+    buffer = ""
+    while True:
+        ch = sys.stdin.read(1)
+        if ch == "":
+            return buffer
+        buffer += ch
 
 
 def on_resize(func):
