@@ -52,16 +52,18 @@ class HitBox:
 class Node:
     # parent is used to bubble events ?
     # (shuld also use the logic tree for event interception)
-    def __init__(self, parent, x=0, y=0, w=1, h=1, onclick=None, onkey=None):
+    def __init__(self, parent, x=0, y=0, w=1, h=1, onclick=None, onkey=None, onfocus=None):
         self.parent = parent
         self.children = []
         self.hitbox = HitBox(x, y, w, h)
         self.click_callback = onclick
         self.key_callbacks = onkey or {}
-        self.selected = False  # focus management
+        self.focus_callback = onfocus
+        self.selected = False  # focus management, set to True when document.selected = <self>
 
     def render(self, x, y):
-        raise NotImplementedError
+        pass
+        #raise NotImplementedError
 
     def capture_click(self, x, y):
         # TODO: use hitboxes and .children to find which child node was clicked, or call self.on_click(x, y)
@@ -78,14 +80,17 @@ class Node:
             self.key_callbacks[key]()
         elif self.parent is not None:
             self.parent.on_key(key)
+    
+    def on_focus(self):
+        if self.focus_callback is not None:
+            self.focus_callback()
 
 
 # Rendering and user event manager
 class Document:
     def __init__(self):
-        self.root = None
-        # dummy mock for the initial document.selected = ...
-        self._selected = Node(None)
+        self.root = Box(None)
+        self._selected = self.root
 
     def init(self, root, selected):
         self.root = root
@@ -100,6 +105,7 @@ class Document:
         self._selected.selected = False
         self._selected = value
         self._selected.selected = True
+        self._selected.on_focus()
 
     def render(self):
         self.root.render(1, 1)
@@ -146,6 +152,24 @@ class Group(Node):
         for elt in self.children:
             elt.render(x + self.hitbox.x, y + self.hitbox.y)
 
+
+# lazy linked Node
+class Box(Node):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.children.append(Node(self))
+
+    @property
+    def contents(self):
+        #assert self.children[0] is not None
+        return self.children[0]
+
+    @contents.setter
+    def contents(self, value):
+        self.children[0] = value
+
+    def render(self, x, y):
+        self.contents.render(x, y)
 
 # print(ctl.style(italic, underline, fg_bright(red)) + "test" + ctl.style(reset))
 
