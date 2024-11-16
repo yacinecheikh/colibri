@@ -1,60 +1,118 @@
 """
-DOM-like widget API
-"""
+Rendering API
 
-from ansi_lib import ctl
+HTML-like recursive hierarchy of graphical objects (text, hitbox,...)
+"""
+import sys
+import time
 from ansi_lib import colors
+"""
+from ansi_lib.colors import (
+    reset,
+    fg_reset,
+    bg_reset,
+
+    bold,
+    italic,
+    underline,
+
+    # basic palette
+    black,
+    red,
+    green,
+    yellow,
+    blue,
+    magenta,
+    cyan,
+    white,
+
+    # functions
+    fg_bright,
+    bg_bright,
+    fg,
+    bg,
+    fg_256,
+    bg_256,
+    # fg_rgb,
+    # bg_rgb,
+)
+"""
+from ansi_lib import ctl
+
+
+# TODO: add support for clicks
+class HitBox:
+    def __init__(self, x, y, w=1, h=1):
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
 
 
 class Node:
-    # default values for nodes that do not use them
-    events = []
-    children = []
+    # parent is used to bubble events ?
+    # (shuld also use the logic tree for event interception)
+    def __init__(self, parent, x=0, y=0, w=1, h=1, onclick=None, onkey=None):
+        self.parent = parent
+        self.children = []
+        self.hitbox = HitBox(x, y, w, h)
+        self.click_callback = onclick
+        self.key_callbacks = onkey or {}
 
     def render(self, x, y):
         raise NotImplementedError
 
-    def on_event(self, key, data):
+    def capture_click(self, x, y):
+        # TODO: use hitboxes and .children to find which child node was clicked, or call self.on_click(x, y)
+        # TODO: be careful of relative positioning (hitboxes must have absolute positions)
         raise NotImplementedError
+
+    def on_click(self, x, y):
+        # TODO: call parent.on_click(x, y) if self.click_callback is None
+        raise NotImplementedError
+
+    def on_key(self, key):
+        # propagate (bubble up) to parent.on_key(key) if self.key_callbacks[key] is not defined
+        if key in self.key_callbacks:
+            self.key_callbacks[key]()
+        elif self.parent is not None:
+            self.parent.on_key(key)
 
 
 class Document:
     def __init__(self, root):
         self.root = root
-        self.event_handlers = self.index_event_handlers(root)
-
-    def index_event_handlers(self, node):
-        event_handlers = {}
-        for event in node.events:
-            event_handlers[event] = node
-        for child in node.children:
-            event_handlers.update(self.index_event_handlers(child))
-        return event_handlers
-
-    def emit_event(self, event, event_data):
-        if event in self.event_handlers:
-            self.event_handlers[event].on_event(event, event_data)
-            return True
-        """
-        else:
-            raise Exception(f"Event {event} not handled")
-        """
+        self.selected = root
 
     def render(self):
         self.root.render(1, 1)
 
+    # key press events bubble up from the currently focused element
+    def on_key(self, key):
+        self.selected.on_key(key)
 
-# concrete Node classes
+    # mouse click events are captured by the deepest element before bubbling up
+    def on_click(self, x, y):
+        self.root.capture_click(x, y)
+
+
+
+# Ad-hoc components
+# (no generic Div, Text or Box for now)
 class Text(Node):
-    def __init__(self, text, *styles, color=colors.white, highlighted=False):
+    def __init__(self, parent, text, *styles, color=colors.white, highlighted=False):
+        super().__init__(parent)
         self.text = text
         self.styles = styles
         # dynamic styling (ad-hoc requirement)
         self.highlighted = highlighted
         self.color = color
+        # TODO: make sure there is no newline when rendering, this will break the hitbox
+        # OR: implement fixed-size boxes (too complex, no)
+        self.hitbox.w = len(text)
 
     def render(self, x, y):
-        ctl.move(x, y)
+        ctl.move(x + self.hitbox.x, y + self.hitbox.y)
         ctl.style(colors.reset, *self.styles)
         if self.highlighted:
             ctl.style(colors.fg_bright(self.color))
@@ -63,20 +121,44 @@ class Text(Node):
         print(self.text)
 
 
-class PositionOffset(Node):
-    def __init__(self, node, x, y):
-        self.node = node
-        self.x = x
-        self.y = y
+class Group(Node):
+    def add(self, elt):
+        self.children.append(elt)
 
     def render(self, x, y):
-        self.node.render(x + self.x, y + self.y)
+        for elt in self.children:
+            elt.render(x + self.hitbox.x, y + self.hitbox.y)
 
 
-class List(Node):
-    def __init__(self, children):
-        self.children = children
+# print(ctl.style(italic, underline, fg_bright(red)) + "test" + ctl.style(reset))
 
-    def render(self, x, y):
-        for i, item in enumerate(self.children):
-            item.render(x, y + i)
+rows = 24
+cols = 80
+
+# basic state "management"
+# TODO: refactor
+
+tabs = {
+    "servers": "servers (S)",
+    "rooms": "rooms (R)",
+    "addresses": "addresses (A)",
+    "broadcasts": "broadcasts (B)",
+}
+selected = "servers"
+
+
+def titles():
+    # print categories: server, addresses, rooms and broadcasts
+    for i, tab in enumerate(tabs):
+        ctl.move(1 + 20 * i, 1)
+        if selected == tab:
+            ctl.style(reset, underline, fg_bright(cyan))
+        else:
+            ctl.style(reset, fg(cyan))
+        print(tabs[tab])
+
+def refresh():
+    ctl.clear()
+    titles()
+    # sys.stdout.flush()
+    time.sleep(1 / 30)

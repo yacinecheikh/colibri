@@ -94,19 +94,20 @@ def main():
     # text = dom.Text("Hello world!", color=cyan, highlighted=True)
     # keyviewer = dom.Text("", color=cyan)
     # keyviewer.buffer = ""
-    tabs = view.Tabs()
-    root = tabs
-    doc = dom.Document(root)
+    v = view.View(view.UI())
 
     while True:
-        doc.render()
+        v.render()
         ch = ctl.getch()
         if ch == "":
             continue
-        elif ch == "q":
-            break
+        # TODO: parse mouse click events
         else:
-            doc.emit_event(ch, None)
+            v.on_key(ch)
+        #elif ch == "q":
+        #    break
+        #else:
+        #    doc.emit_event(ch, None)
         # else:
             # keyviewer.buffer += ch
             # keyviewer.text = repr(keyviewer.buffer)
@@ -115,5 +116,7 @@ def main():
 try:
     main()
 except Exception as e:
+    import traceback
     with open("error", "w") as f:
-        f.write(repr(e))
+        traceback.print_exception(e, file=f)
+        #f.write(repr(e))
