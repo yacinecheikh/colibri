@@ -52,6 +52,7 @@ class UI:
         doc.init(self.display, self.tabselector.display)
         # rendering changes when focused
         # TODO: use signals to let tabselector get notified when the focus goes to its display
+        # (currently impossible because of recursive refresh->focus->refresh loop)
         self.tabselector.on_focus()
 
     def refresh_display(self):
@@ -88,7 +89,8 @@ class TabSelector:
         ]
         self.selected = ref(0)
 
-        self.refresh_display()
+        self.create_display()
+        self.reload_display()
 
     def on_event(self, name, data):
         if name == "left":
@@ -98,12 +100,14 @@ class TabSelector:
         else:
             raise ValueError(f"unknown event type: {name}")
 
-        self.refresh_display()
+        self.reload_display()
 
     def on_focus(self):
-        self.refresh_display()
+        self.reload_display()
+        doc = get_document()
+        doc.selected = self.display
 
-    def refresh_display(self):
+    def create_display(self):
         # the parent of the display is set externally
         group = dom.Group(parent=None)
         tab_labels = []
@@ -114,3 +118,9 @@ class TabSelector:
             label.hitbox.x = 1 + 20 * i
             group.add(label)
         self.display = group
+    
+    def reload_display(self):
+        parent = self.display.parent
+        self.create_display()
+        self.display.parent = parent
+
