@@ -46,6 +46,14 @@ class UI:
         # (or the Document will be entirely desynchronized with the new UI)
         self.refresh_display()
 
+
+        # manually define the document root and focus
+        doc = get_document()
+        doc.init(self.display, self.tabselector.display)
+        # rendering changes when focused
+        # TODO: use signals to let tabselector get notified when the focus goes to its display
+        self.tabselector.on_focus()
+
     def refresh_display(self):
         self.display = dom.Group(None, onkey={
             "q": self.on_quit,
@@ -90,6 +98,9 @@ class TabSelector:
         else:
             raise ValueError(f"unknown event type: {name}")
 
+        self.refresh_display()
+
+    def on_focus(self):
         self.refresh_display()
 
     def refresh_display(self):

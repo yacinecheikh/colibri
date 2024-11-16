@@ -82,10 +82,14 @@ class Node:
 
 # Rendering and user event manager
 class Document:
-    # post-creation constructor
-    def set_root(self, root):
+    def __init__(self):
+        self.root = None
+        # dummy mock for the initial document.selected = ...
+        self._selected = Node(None)
+
+    def init(self, root, selected):
         self.root = root
-        self._selected = root
+        self.selected = selected
 
     @property
     def selected(self):

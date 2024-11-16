@@ -97,12 +97,12 @@ def main():
 
     # user-centric UI
     document = dom.Document()
-    # give the UI model control over the user display (needed for focus management)
+    # make the document available to all UI components (needed for focus management)
     view.document_ref.value = document
     # create the app UI logic
     ui = view.UI()
     # display the UI
-    document.set_root(ui.display)
+    #document.set_root(ui.display)
     #v = view.View(view.UI())
 
     while True:
