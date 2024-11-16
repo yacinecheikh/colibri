@@ -167,6 +167,7 @@ class Box(Node):
     @contents.setter
     def contents(self, value):
         self.children[0] = value
+        value.parent = self
 
     def render(self, x, y):
         self.contents.render(x, y)

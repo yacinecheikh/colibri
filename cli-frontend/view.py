@@ -65,7 +65,7 @@ class UI:
             "q": self.on_quit,
         })
         self.display.contents.add(self.tabselector.display)
-        self.tabselector.display.parent = self.display
+        self.tabselector.display.parent = self.display.contents
 
     def on_quit(self):
         import sys
