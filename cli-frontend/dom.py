@@ -82,6 +82,8 @@ class Node:
             self.key_callbacks["any"](key)
         elif self.parent is not None:
             self.parent.on_key(key)
+        #else:
+        #    print("error: unhandled event:" + repr(key))
     
     def on_focus(self):
         if self.focus_callback is not None:

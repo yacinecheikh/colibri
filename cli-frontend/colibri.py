@@ -91,10 +91,6 @@ init()
 
 
 def main():
-    # text = dom.Text("Hello world!", color=cyan, highlighted=True)
-    # keyviewer = dom.Text("", color=cyan)
-    # keyviewer.buffer = ""
-
     # user-centric UI
     document = dom.Document()
     # create the app UI logic manager
@@ -108,7 +104,9 @@ def main():
     #v = view.View(view.UI())
 
     while True:
-        #v.render()
+        # TODO: add a wrapper with a virtual terminal to compute what should be written before writing anything
+        # (todo: use the result of write() to determine a list of hitboxes (written surfaces)
+        #ctl.clear()  # causes insufferable flickering
         document.render()
         ch = ctl.getch()
         if ch == "":

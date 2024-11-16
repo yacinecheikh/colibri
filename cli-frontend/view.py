@@ -6,6 +6,7 @@ Pure logic dom (does not manage rendering)
 
 from ansi_lib import ctl
 from ansi_lib import colors
+from ansi_lib import keys
 import dom
 from dom import Box, Text
 
@@ -47,7 +48,7 @@ class UI:
 
     def load(self):
         self.tabselector = TabSelector()
-        self.inputviewer = InputViewer()
+        #self.inputviewer = InputViewer()
         # can define key callbacks on self.display here
 
         self.refresh_display()
@@ -58,7 +59,7 @@ class UI:
         # this will trigger tabselector.display.on_focus and rerender
         doc.selected = self.tabselector.display
 
-        doc.selected = self.inputviewer.display
+        #doc.selected = self.inputviewer.display
 
 
     def refresh_display(self):
@@ -68,10 +69,10 @@ class UI:
             "q": self.on_quit,
         })
         self.display.contents.add(self.tabselector.display)
-        self.display.contents.add(self.inputviewer.display)
+        #self.display.contents.add(self.inputviewer.display)
         # attach children to the current block (not the permanent Box wrapper) to allow key event propagation
         self.tabselector.display.parent = self.display.contents
-        self.inputviewer.display.parent = self.display.contents
+        #self.inputviewer.display.parent = self.display.contents
 
     def on_quit(self):
         import sys
@@ -92,6 +93,8 @@ class UI:
 
 
 
+# exploratory widget
+# used to figure out what strings special keys are represented by
 class InputViewer:
     def __init__(self):
         self.buffer = ""
@@ -102,7 +105,6 @@ class InputViewer:
     
     def refresh_display(self):
         self.display.contents = Text(self.display, repr(self.buffer), color=colors.white)
-
 
     def on_key(self, key):
         self.buffer += key
@@ -121,14 +123,21 @@ class TabSelector:
 
         self.display = Box()
         self.display.focus_callback = self.refresh_display
-        #self.display.key_callbacks["
+        self.display.key_callbacks[keys.left] = lambda: self.on_event("left")
+        self.display.key_callbacks[keys.right] = lambda: self.on_event("right")
+        self.display.key_callbacks["s"] = lambda: self.on_event("set", 0)
+        self.display.key_callbacks["r"] = lambda: self.on_event("set", 1)
+        self.display.key_callbacks["a"] = lambda: self.on_event("set", 2)
+        self.display.key_callbacks["b"] = lambda: self.on_event("set", 3)
         self.refresh_display()
 
-    def on_event(self, name, data):
+    def on_event(self, name, data=None):
         if name == "left":
-            self.selected.value = (self.selected - 1) % len(self.tabs)
+            self.selected.value = (self.selected.value - 1) % len(self.tabs)
         elif name == "right":
-            self.selected.value = (self.selected + 1) % len(self.tabs)
+            self.selected.value = (self.selected.value + 1) % len(self.tabs)
+        elif name == "set":
+            self.selected.value = data
         else:
             raise ValueError(f"unknown event type: {name}")
 
