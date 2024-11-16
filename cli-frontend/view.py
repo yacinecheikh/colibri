@@ -31,25 +31,19 @@ class ref:
         self.callbacks.append(callback)
 
 
-class View:
-    def __init__(self, elt):
-        self.element = elt
-        self.document = dom.Document(elt.display)
+# "futures"
+# lazy loaded globals, alternative to recursive reference passing
+document_ref = ref(None)
+get_document = lambda: document_ref.value
 
-    # proxy rendering to the Document
-    def render(self):
-        self.document.render()
-
-    # proxy graphical events to the document
-    def on_click(self, x, y):
-        self.document.on_click(x, y)
-    def on_key(self, key):
-        self.document.on_key(key)
 
 
 class UI:
     def __init__(self):
         self.tabselector = TabSelector()
+        # WARNING
+        # The UI must never be refreshed after that
+        # (or the Document will be entirely desynchronized with the new UI)
         self.refresh_display()
 
     def refresh_display(self):

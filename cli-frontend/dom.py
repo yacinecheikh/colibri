@@ -58,6 +58,7 @@ class Node:
         self.hitbox = HitBox(x, y, w, h)
         self.click_callback = onclick
         self.key_callbacks = onkey or {}
+        self.selected = False  # focus management
 
     def render(self, x, y):
         raise NotImplementedError
@@ -79,10 +80,22 @@ class Node:
             self.parent.on_key(key)
 
 
+# Rendering and user event manager
 class Document:
-    def __init__(self, root):
+    # post-creation constructor
+    def set_root(self, root):
         self.root = root
-        self.selected = root
+        self._selected = root
+
+    @property
+    def selected(self):
+        return self._selected
+
+    @selected.setter
+    def selected(self, value):
+        self._selected.selected = False
+        self._selected = value
+        self._selected.selected = True
 
     def render(self):
         self.root.render(1, 1)

@@ -94,16 +94,26 @@ def main():
     # text = dom.Text("Hello world!", color=cyan, highlighted=True)
     # keyviewer = dom.Text("", color=cyan)
     # keyviewer.buffer = ""
-    v = view.View(view.UI())
+
+    # user-centric UI
+    document = dom.Document()
+    # give the UI model control over the user display (needed for focus management)
+    view.document_ref.value = document
+    # create the app UI logic
+    ui = view.UI()
+    # display the UI
+    document.set_root(ui.display)
+    #v = view.View(view.UI())
 
     while True:
-        v.render()
+        #v.render()
+        document.render()
         ch = ctl.getch()
         if ch == "":
             continue
         # TODO: parse mouse click events
         else:
-            v.on_key(ch)
+            document.on_key(ch)
         #elif ch == "q":
         #    break
         #else:
