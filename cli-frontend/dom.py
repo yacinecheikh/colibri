@@ -78,6 +78,8 @@ class Node:
         # propagate (bubble up) to parent.on_key(key) if self.key_callbacks[key] is not defined
         if key in self.key_callbacks:
             self.key_callbacks[key]()
+        elif "any" in self.key_callbacks:
+            self.key_callbacks["any"](key)
         elif self.parent is not None:
             self.parent.on_key(key)
     

@@ -7,7 +7,7 @@ Pure logic dom (does not manage rendering)
 from ansi_lib import ctl
 from ansi_lib import colors
 import dom
-from dom import Box
+from dom import Box, Text
 
 
 # state store/reference type
@@ -47,15 +47,18 @@ class UI:
 
     def load(self):
         self.tabselector = TabSelector()
-        self.tabselector.display.parent = self.display  # attach child
+        self.inputviewer = InputViewer()
         # can define key callbacks on self.display here
 
         self.refresh_display()
+
         # manually define the document root and focus
         doc = get_document()
         doc.root.contents = self.display
         # this will trigger tabselector.display.on_focus and rerender
         doc.selected = self.tabselector.display
+
+        doc.selected = self.inputviewer.display
 
 
     def refresh_display(self):
@@ -65,7 +68,10 @@ class UI:
             "q": self.on_quit,
         })
         self.display.contents.add(self.tabselector.display)
+        self.display.contents.add(self.inputviewer.display)
+        # attach children to the current block (not the permanent Box wrapper) to allow key event propagation
         self.tabselector.display.parent = self.display.contents
+        self.inputviewer.display.parent = self.display.contents
 
     def on_quit(self):
         import sys
@@ -84,6 +90,25 @@ class UI:
     #        sys.exit(0)
 
 
+
+
+class InputViewer:
+    def __init__(self):
+        self.buffer = ""
+        self.display = Box()
+        self.display.key_callbacks["any"] = self.on_key
+
+        self.refresh_display()
+    
+    def refresh_display(self):
+        self.display.contents = Text(self.display, repr(self.buffer), color=colors.white)
+
+
+    def on_key(self, key):
+        self.buffer += key
+        self.refresh_display()
+
+
 class TabSelector:
     def __init__(self):
         self.tabs = [
@@ -95,7 +120,8 @@ class TabSelector:
         self.selected = ref(0)
 
         self.display = Box()
-        self.display.focus_callback = self.on_focus
+        self.display.focus_callback = self.refresh_display
+        #self.display.key_callbacks["
         self.refresh_display()
 
     def on_event(self, name, data):
@@ -108,13 +134,7 @@ class TabSelector:
 
         self.refresh_display()
 
-    def on_focus(self):
-        self.refresh_display()
-
     def refresh_display(self):
-        # the parent of the display is set externally
-        #if self.display.selected:
-        #    print("\ntest")
         group = dom.Group(parent=None)
         tab_labels = []
         for tab in self.tabs:
