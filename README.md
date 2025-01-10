@@ -8,10 +8,10 @@ This project is on hiatus due to being too similar to the Simplex chat app.
 
 ## Status
 
-Server: Useable
-CLI client: Useable
-GUI frontend: Not started
-Protocol: Documentation needs to be reviewed by someone else
+- Server: Useable
+- CLI client: Useable
+- GUI frontend: Not started
+- Protocol: Documentation needs to be reviewed by someone else
 
 ## Motivations
 
