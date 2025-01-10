@@ -2,6 +2,10 @@
 
 A protocol for encrypted and untraceable communications.
 
+## Warning
+
+This project is on hiatus due to being too similar to the Simplex chat app.
+
 ## Status
 
 Server: Useable
